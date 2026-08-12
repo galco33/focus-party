@@ -1,5 +1,8 @@
 # Focus Party
 
+[![CI](https://github.com/galco33/focus-party/actions/workflows/ci.yml/badge.svg)](https://github.com/galco33/focus-party/actions/workflows/ci.yml)
+[![Licence MIT](https://img.shields.io/badge/licence-MIT-green.svg)](LICENSE)
+
 Focus Party est une plateforme de **Pomodoro communautaire pour Twitch**. Le chat devient la télécommande de la session : le streamer pilote le minuteur, les viewers gèrent leurs tâches personnelles et un overlay OBS affiche l’avancement en direct.
 
 Le projet est entièrement open source sous licence MIT. Vous pouvez le forker, modifier l’interface, ajouter des commandes ou l’héberger sur votre propre compte Cloudflare.
@@ -56,7 +59,7 @@ Une description plus détaillée est disponible dans [docs/ARCHITECTURE.md](docs
 Prérequis : Node.js 22.13 ou plus récent.
 
 ```bash
-git clone URL_DE_VOTRE_FORK
+git clone https://github.com/galco33/focus-party.git
 cd focus-party
 npm install
 npm run dev

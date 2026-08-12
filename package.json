@@ -4,6 +4,14 @@
   "description": "Pomodoro communautaire open source piloté depuis le chat Twitch avec overlay OBS.",
   "license": "MIT",
   "private": true,
+  "homepage": "https://focus-party-pomodoro-g97.focus-party-g97.workers.dev/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/galco33/focus-party.git"
+  },
+  "bugs": {
+    "url": "https://github.com/galco33/focus-party/issues"
+  },
   "engines": {
     "node": ">=22.13.0"
   },
