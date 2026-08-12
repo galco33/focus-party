@@ -6,6 +6,12 @@ export const channels = sqliteTable("channels", {
   username: text("username").notNull(),
   displayName: text("display_name").notNull(),
   createdAt: text("created_at").notNull(),
+  connectedAt: text("connected_at"),
+  twitchAccessToken: text("twitch_access_token"),
+  twitchRefreshToken: text("twitch_refresh_token"),
+  tokenExpiresAt: integer("token_expires_at"),
+  eventsubStatus: text("eventsub_status"),
+  eventsubSubscriptionId: text("eventsub_subscription_id"),
 }, (table) => [uniqueIndex("idx_channels_twitch_channel_id").on(table.twitchChannelId)]);
 
 export const users = sqliteTable("users", {
@@ -42,3 +48,39 @@ export const processedEvents = sqliteTable("processed_events", {
   id: text("id").primaryKey(),
   expiresAt: integer("expires_at").notNull(),
 }, (table) => [index("idx_processed_events_expiry").on(table.expiresAt)]);
+
+export const oauthStates = sqliteTable("oauth_states", {
+  stateHash: text("state_hash").primaryKey(),
+  expiresAt: integer("expires_at").notNull(),
+});
+
+export const authSessions = sqliteTable("auth_sessions", {
+  tokenHash: text("token_hash").primaryKey(),
+  channelId: text("channel_id").notNull(),
+  expiresAt: integer("expires_at").notNull(),
+  createdAt: text("created_at").notNull(),
+}, (table) => [index("idx_auth_sessions_channel").on(table.channelId)]);
+
+export const commandCooldowns = sqliteTable("command_cooldowns", {
+  channelId: text("channel_id").notNull(),
+  userId: text("user_id").notNull(),
+  command: text("command").notNull(),
+  lastUsedAt: integer("last_used_at").notNull(),
+}, (table) => [
+  uniqueIndex("idx_command_cooldowns_key").on(table.channelId, table.userId, table.command),
+]);
+
+export const chatEvents = sqliteTable("chat_events", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  twitchMessageId: text("twitch_message_id").notNull(),
+  channelId: text("channel_id").notNull(),
+  userId: text("user_id").notNull(),
+  username: text("username").notNull(),
+  role: text("role").notNull(),
+  message: text("message").notNull(),
+  reply: text("reply"),
+  createdAt: text("created_at").notNull(),
+}, (table) => [
+  uniqueIndex("idx_chat_events_twitch_message").on(table.twitchMessageId),
+  index("idx_chat_events_channel_created").on(table.channelId, table.createdAt),
+]);

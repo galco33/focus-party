@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 type OverlayState = {
-  channel: { username: string };
+  channel: { id: string; username: string; connected: boolean };
   timer: {
     currentSession: number;
     totalSessions: number;
@@ -17,7 +17,7 @@ type OverlayState = {
 };
 
 const fallback: OverlayState = {
-  channel: { username: "noctua_dev" },
+  channel: { id: "", username: "focus-party", connected: false },
   timer: { currentSession: 1, totalSessions: 5, focusDuration: 25, breakDuration: 5, status: "IDLE", phase: "FOCUS", remainingSeconds: 1500 },
   tasks: [],
 };
@@ -28,25 +28,31 @@ function formatTime(seconds: number) {
 
 export default function Overlay() {
   const [state, setState] = useState(fallback);
+  const channelId = typeof window === "undefined"
+    ? ""
+    : new URLSearchParams(window.location.search).get("channel") ?? "";
+
   const refresh = useCallback(async () => {
+    if (!channelId) return;
     try {
-      const response = await fetch("/api/state", { cache: "no-store" });
+      const response = await fetch(`/api/state?channel=${encodeURIComponent(channelId)}`, { cache: "no-store" });
       if (response.ok) setState(await response.json() as OverlayState);
     } catch {
       // The current server value is kept through short reconnects.
     }
-  }, []);
+  }, [channelId]);
 
   useEffect(() => {
+    if (!channelId) return;
     const initialRefresh = window.setTimeout(refresh, 0);
     const poll = window.setInterval(refresh, 8000);
     const channel = new BroadcastChannel("focus-party-updates");
     channel.onmessage = () => void refresh();
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const realtime = new WebSocket(`${protocol}//${window.location.host}/api/realtime`);
+    const realtime = new WebSocket(`${protocol}//${window.location.host}/api/realtime?channel=${encodeURIComponent(channelId)}`);
     realtime.onmessage = () => void refresh();
     return () => { window.clearTimeout(initialRefresh); window.clearInterval(poll); channel.close(); realtime.close(); };
-  }, [refresh]);
+  }, [channelId, refresh]);
 
   useEffect(() => {
     if (state.timer.status !== "RUNNING") return;

@@ -21,7 +21,9 @@ test("server-renders the Focus Party dashboard", async () => {
   assert.match(html, /<title>Focus Party/);
   assert.match(html, /FOCUS/);
   assert.match(html, /Dashboard/);
-  assert.match(html, /Chat Twitch/);
+  assert.match(html, /Se connecter à Twitch/);
+  assert.match(html, /Commandes Twitch/);
+  assert.doesNotMatch(html, /simulateur|noctua_dev/i);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton|Your site is taking shape/);
 });
 

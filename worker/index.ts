@@ -1,25 +1,33 @@
-/** Cloudflare Worker entry point for the vinext-starter template. */
+/** Cloudflare Worker entry point for Focus Party. */
+import { DurableObject } from "cloudflare:workers";
 import { handleImageOptimization, DEFAULT_DEVICE_SIZES, DEFAULT_IMAGE_SIZES } from "vinext/server/image-optimization";
 import handler from "vinext/server/app-router-entry";
 
-interface Env {
-  ASSETS: Fetcher;
-  DB: D1Database;
-  IMAGES: {
-    input(stream: ReadableStream): {
-      transform(options: Record<string, unknown>): {
-        output(options: { format: string; quality: number }): Promise<{ response(): Response }>;
-      };
-    };
-  };
-}
+export class RealtimeRoom extends DurableObject<Env> {
+  async fetch(request: Request): Promise<Response> {
+    if (request.headers.get("Upgrade")?.toLowerCase() !== "websocket") {
+      return new Response("WebSocket required", { status: 426 });
+    }
+    const pair = new WebSocketPair();
+    const [client, server] = Object.values(pair);
+    this.ctx.acceptWebSocket(server);
+    return new Response(null, { status: 101, webSocket: client });
+  }
 
-interface ExecutionContext {
-  waitUntil(promise: Promise<unknown>): void;
-  passThroughOnException(): void;
-}
+  async broadcast(message: string): Promise<void> {
+    for (const socket of this.ctx.getWebSockets()) {
+      try {
+        socket.send(message);
+      } catch {
+        socket.close(1011, "Unable to deliver update");
+      }
+    }
+  }
 
-const realtimeClients = new Set<WebSocket>();
+  async webSocketMessage(_socket: WebSocket, message: string | ArrayBuffer): Promise<void> {
+    if (typeof message === "string" && message === "refresh") await this.broadcast("refresh");
+  }
+}
 
 // Image security config. SVG sources with .svg extension auto-skip the
 // optimization endpoint on the client side (served directly, no proxy).
@@ -36,30 +44,17 @@ const worker = {
       if (origin && new URL(origin).host !== url.host) {
         return new Response("Origin not allowed", { status: 403 });
       }
-      const pair = new WebSocketPair();
-      const client = pair[0];
-      const server = pair[1];
-      server.accept();
-      realtimeClients.add(server);
-      const close = () => realtimeClients.delete(server);
-      server.addEventListener("close", close);
-      server.addEventListener("error", close);
-      server.addEventListener("message", () => {
-        for (const socket of realtimeClients) {
-          try { socket.send("refresh"); } catch { realtimeClients.delete(socket); }
-        }
-      });
-      return new Response(null, { status: 101, webSocket: client });
+      const channelId = url.searchParams.get("channel") ?? "public";
+      if (!/^[a-zA-Z0-9_-]{1,64}$/.test(channelId)) {
+        return new Response("Invalid channel", { status: 400 });
+      }
+      return env.REALTIME.getByName(channelId).fetch(request);
     }
 
     if (url.pathname === "/_vinext/image") {
       const allowedWidths = [...DEFAULT_DEVICE_SIZES, ...DEFAULT_IMAGE_SIZES];
       return handleImageOptimization(request, {
         fetchAsset: (path) => env.ASSETS.fetch(new Request(new URL(path, request.url))),
-        transformImage: async (body, { width, format, quality }) => {
-          const result = await env.IMAGES.input(body).transform(width > 0 ? { width } : {}).output({ format, quality });
-          return result.response();
-        },
       }, allowedWidths);
     }
 
@@ -67,4 +62,4 @@ const worker = {
   },
 };
 
-export default worker;
+export default worker satisfies ExportedHandler<Env>;

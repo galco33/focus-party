@@ -3,7 +3,7 @@
   "name": "focus-party-pomodoro-g97",
   "main": "dist/server/index.js",
   "base_dir": "dist/server",
-  "compatibility_date": "2026-05-15",
+  "compatibility_date": "2026-08-12",
   "compatibility_flags": ["nodejs_compat"],
   "no_bundle": true,
   "rules": [
@@ -23,7 +23,34 @@
       "database_id": "80374466-fbeb-40f3-acba-5b47b92aa034"
     }
   ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "REALTIME",
+        "class_name": "RealtimeRoom"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["RealtimeRoom"]
+    }
+  ],
+  "vars": {
+    "TWITCH_CLIENT_ID": "dvhxdj53qdl1t406d3nitmvti4gexp"
+  },
+  "secrets": {
+    "required": [
+      "TWITCH_CLIENT_SECRET",
+      "TWITCH_EVENTSUB_SECRET",
+      "TWITCH_TOKEN_ENCRYPTION_KEY"
+    ]
+  },
   "observability": {
-    "enabled": true
+    "enabled": true,
+    "logs": {
+      "head_sampling_rate": 1
+    }
   }
 }

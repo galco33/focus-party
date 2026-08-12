@@ -31,6 +31,10 @@ const localBindingConfig = {
         },
       ]
     : [],
+  durable_objects: {
+    bindings: [{ name: "REALTIME", class_name: "RealtimeRoom" }],
+  },
+  migrations: [{ tag: "v1", new_sqlite_classes: ["RealtimeRoom"] }],
 };
 
 export default defineConfig(async () => {

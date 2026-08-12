@@ -103,6 +103,11 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .twitch-strip p { color: var(--muted); font-size: 10px; margin: 0 auto 0 7px; padding-left: 18px; border-left: 1px solid var(--line); }
 .twitch-strip > button { border: 0; background: transparent; font-size: 10px; font-weight: 800; cursor: pointer; }
 .twitch-strip > button span { margin-left: 5px; color: var(--violet); }
+.twitch-strip.disconnected { border-color: #d9cef8; background: linear-gradient(110deg, #fffef9 55%, #f3edff); }
+.twitch-strip .pending { display: inline-flex; align-items: center; gap: 7px; color: #8b651b; background: #fff7df; border-radius: 20px; padding: 6px 10px; font-size: 9px; font-weight: 800; }
+.twitch-strip .pending i { width: 5px; height: 5px; border-radius: 50%; background: #e5a82d; box-shadow: 0 0 0 4px rgba(229,168,45,.13); }
+.twitch-connect { margin-left: auto; border-radius: 9px; background: var(--violet); color: white; padding: 11px 14px; text-decoration: none; font-size: 10px; font-weight: 900; }
+.twitch-connect span { margin-left: 7px; color: var(--acid); }
 
 .dashboard-grid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(290px, .72fr); gap: 17px; }
 .timer-card, .config-card, .community-card, .chat-card, .subpage, .settings-panel { border-radius: 16px; border: 1px solid var(--line); box-shadow: var(--shadow); overflow: hidden; }
@@ -141,7 +146,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .primary-control span { margin-right: 8px; }
 .icon-control { width: 42px; background: #3a3440; color: #928c97; border: 1px solid #494250; }
 .primary-control:hover { background: #e3fa8e; transform: translateY(-1px); }
-button:disabled { opacity: .55; cursor: wait; }
+button:disabled { opacity: .55; cursor: not-allowed; }
 
 .saved-dot { color: #89858e; font-size: 8px; }
 .saved-dot::before { content: ""; display: inline-block; width: 5px; height: 5px; background: #38c777; border-radius: 50%; margin-right: 6px; }
@@ -195,6 +200,12 @@ button:disabled { opacity: .55; cursor: wait; }
 .viewer-count { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 9px; }
 .viewer-count i { width: 5px; height: 5px; }
 .chat-feed { padding: 13px 17px 7px; height: 188px; overflow-y: auto; display: flex; flex-direction: column; gap: 11px; scroll-behavior: smooth; }
+.real-chat-feed { height: 235px; }
+.chat-command { display: flex; flex-direction: column; gap: 5px; }
+.chat-command.streamer .chat-avatar { background: var(--orange); }
+.chat-command.moderator .chat-avatar { background: var(--mint); }
+.chat-reply { margin-left: 34px; border-left: 2px solid var(--acid-deep); padding: 5px 8px; border-radius: 0 6px 6px 0; background: #f5f8e9; color: #68723d; font-size: 8px; line-height: 1.4; }
+.empty-state { margin: auto; max-width: 270px; text-align: center; color: var(--muted); font-size: 9px; line-height: 1.6; }
 .chat-line { display: flex; gap: 9px; align-items: flex-start; }
 .chat-avatar { flex: 0 0 auto; width: 25px; height: 25px; border-radius: 8px; background: #e9e7e1; display: grid; place-items: center; font-size: 8px; font-weight: 900; }
 .chat-line.bot .chat-avatar { background: var(--acid); }
@@ -247,6 +258,11 @@ button:disabled { opacity: .55; cursor: wait; }
 .settings-fields label { display: grid; grid-template-columns: 1fr 80px 60px; align-items: center; padding: 11px 12px; border: 1px solid var(--line); border-radius: 10px; font-size: 10px; font-weight: 700; }
 .settings-fields input { width: 70px; border: 0; background: var(--paper); border-radius: 6px; padding: 7px; font-weight: 900; }
 .settings-fields span { color: var(--muted); font-size: 8px; text-align: right; }
+.connection-summary { display: flex; justify-content: space-between; align-items: center; gap: 18px; padding: 13px 0; border-bottom: 1px solid var(--line); font-size: 10px; }
+.connection-summary span { color: var(--muted); }
+.connection-summary strong { text-align: right; }
+.disconnect-button { width: 100%; height: 41px; margin-top: 18px; border: 1px solid #e8c7c7; border-radius: 10px; background: #fff6f6; color: #a43f3f; cursor: pointer; font-size: 9px; font-weight: 900; }
+.settings-connect { display: grid; place-items: center; text-decoration: none; }
 .toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--line); cursor: pointer; }
 .toggle-row > span { display: flex; flex-direction: column; gap: 4px; }
 .toggle-row strong { font-size: 10px; }
@@ -316,6 +332,7 @@ button:disabled { opacity: .55; cursor: wait; }
   .twitch-strip { flex-wrap: wrap; }
   .twitch-strip p { display: none; }
   .twitch-strip > button { margin-left: auto; }
+  .twitch-connect { width: 100%; margin-left: 0; text-align: center; }
   .timer-card { padding: 19px 15px; min-height: 380px; }
   .big-time { font-size: 69px; }
   .duration-row { grid-template-columns: 1fr 1fr; }
