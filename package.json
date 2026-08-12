@@ -1,6 +1,8 @@
 {
   "name": "focus-party",
   "version": "0.1.0",
+  "description": "Pomodoro communautaire open source piloté depuis le chat Twitch avec overlay OBS.",
+  "license": "MIT",
   "private": true,
   "engines": {
     "node": ">=22.13.0"
@@ -11,6 +13,7 @@
     "start": "vinext start --host 0.0.0.0",
     "test": "npm run build && node --experimental-loader ./tests/cloudflare-workers-loader.mjs --test tests/rendered-html.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next --ignore-pattern worker-configuration.d.ts",
+    "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {

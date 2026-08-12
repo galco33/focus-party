@@ -1,0 +1,32 @@
+name: Signaler un bug
+description: Décrire un comportement incorrect ou inattendu
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Merci de vérifier qu’aucune issue similaire n’existe déjà. Ne publiez aucun secret Twitch ou Cloudflare.
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Que s’est-il passé et quel comportement attendiez-vous ?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Étapes pour reproduire
+      placeholder: "1. Ouvrir…\n2. Envoyer…\n3. Observer…"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environnement
+      description: Navigateur, version de Node.js, déploiement Cloudflare ou local.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Informations utiles
+      description: Logs nettoyés de tout secret ou capture d’écran.

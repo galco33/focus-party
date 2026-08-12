@@ -4,7 +4,7 @@
 interface __BaseEnv_Env {
 	DB: D1Database;
 	ASSETS: Fetcher;
-	TWITCH_CLIENT_ID: "dvhxdj53qdl1t406d3nitmvti4gexp";
+	TWITCH_CLIENT_ID: string;
 	TWITCH_CLIENT_SECRET: string;
 	TWITCH_EVENTSUB_SECRET: string;
 	TWITCH_TOKEN_ENCRYPTION_KEY: string;

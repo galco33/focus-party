@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "focus-party-pomodoro-g97",
+  "name": "VOTRE_NOM_DE_WORKER",
   "main": "dist/server/index.js",
   "base_dir": "dist/server",
   "compatibility_date": "2026-08-12",
@@ -20,7 +20,7 @@
     {
       "binding": "DB",
       "database_name": "focus-party-db",
-      "database_id": "80374466-fbeb-40f3-acba-5b47b92aa034"
+      "database_id": "VOTRE_DATABASE_ID"
     }
   ],
   "durable_objects": {
@@ -38,7 +38,7 @@
     }
   ],
   "vars": {
-    "TWITCH_CLIENT_ID": "dvhxdj53qdl1t406d3nitmvti4gexp"
+    "TWITCH_CLIENT_ID": "VOTRE_TWITCH_CLIENT_ID"
   },
   "secrets": {
     "required": [
