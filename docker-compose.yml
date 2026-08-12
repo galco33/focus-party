@@ -1,0 +1,11 @@
+services:
+  focus-party:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - focus-party-data:/app/.wrangler
+    restart: unless-stopped
+
+volumes:
+  focus-party-data:
