@@ -1,63 +1,65 @@
 # Focus Party
 
+**English** · [Français](README.fr.md)
+
 [![CI](https://github.com/galco33/focus-party/actions/workflows/ci.yml/badge.svg)](https://github.com/galco33/focus-party/actions/workflows/ci.yml)
-[![Licence MIT](https://img.shields.io/badge/licence-MIT-green.svg)](LICENSE)
+[![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-Focus Party est une plateforme de **Pomodoro communautaire pour Twitch**. Le chat devient la télécommande de la session : le streamer pilote le minuteur, les viewers gèrent leurs tâches personnelles et un overlay OBS affiche l’avancement en direct.
+Focus Party is a **community Pomodoro platform for Twitch**. The chat becomes the session remote control: the streamer runs the timer, viewers manage their personal tasks, and an OBS overlay displays live progress.
 
-Le projet est entièrement open source sous licence MIT. Vous pouvez le forker, modifier l’interface, ajouter des commandes ou l’héberger sur votre propre compte Cloudflare.
+The project is fully open source under the MIT License. You can fork it, customize the interface, add commands, or host it on your own Cloudflare account.
 
-**Démo publique :** [focus-party-pomodoro-g97.focus-party-g97.workers.dev](https://focus-party-pomodoro-g97.focus-party-g97.workers.dev/)
+**Public demo:** [focus-party-pomodoro-g97.focus-party-g97.workers.dev](https://focus-party-pomodoro-g97.focus-party-g97.workers.dev/)
 
-## Ce que fait l’application
+## Features
 
-- connexion sécurisée de chaque streamer avec Twitch OAuth ;
-- réception des messages du chat avec Twitch EventSub ;
-- réponses du bot directement dans le chat de la chaîne ;
-- minuteur Pomodoro contrôlé depuis Twitch ;
-- listes de tâches personnelles, isolées par viewer et par chaîne ;
-- dashboard et overlay OBS synchronisés en temps réel ;
-- ajout facultatif d’un logo PNG avec taille et position personnalisables dans les trois sources OBS ;
-- fonctionnement multi-chaînes : chaque streamer possède ses propres données ;
-- chiffrement des jetons Twitch avant leur stockage dans Cloudflare D1.
+- secure sign-in for each streamer with Twitch OAuth;
+- Twitch chat message delivery through EventSub;
+- bot replies sent directly to the channel chat;
+- Pomodoro timer controlled from Twitch;
+- personal task lists isolated by viewer and channel;
+- real-time synchronization between the dashboard and OBS overlays;
+- optional PNG logo with customizable size and position across all three OBS sources;
+- multi-channel support, with separate data for every streamer;
+- encrypted Twitch tokens before storage in Cloudflare D1.
 
-## Commandes Twitch
+## Twitch commands
 
-| Commande | Effet | Accès |
+| Command | Effect | Access |
 | --- | --- | --- |
-| `!pomo 5` | Configure 5 sessions | Streamer |
-| `!timer 25/5` | Configure 25 min de focus et 5 min de pause | Streamer |
-| `!pomo start` | Démarre le Pomodoro | Streamer |
-| `!pomo pause` | Met le minuteur en pause | Streamer |
-| `!pomo resume` | Reprend le minuteur | Streamer |
-| `!pomo stop` | Arrête le Pomodoro | Streamer |
-| `!pomo status` | Affiche l’état actuel | Tout le monde |
-| `!task add Mon objectif` | Ajoute une tâche personnelle | Tout le monde |
-| `!task` | Affiche ses tâches | Tout le monde |
-| `!task done 1` | Termine sa tâche n°1 | Tout le monde |
-| `!task remove 1` | Supprime sa tâche n°1 | Tout le monde |
-| `!task clear` | Supprime ses tâches terminées | Tout le monde |
-| `!task clear all` | Supprime toutes les tâches terminées de la chaîne | Streamer |
+| `!pomo 5` | Sets 5 sessions | Streamer |
+| `!timer 25/5` | Sets 25 minutes of focus and a 5-minute break | Streamer |
+| `!pomo start` | Starts the Pomodoro | Streamer |
+| `!pomo pause` | Pauses the timer | Streamer |
+| `!pomo resume` | Resumes the timer | Streamer |
+| `!pomo stop` | Stops the timer | Streamer |
+| `!pomo status` | Shows the current timer status | Everyone |
+| `!task add My goal` | Adds a personal task | Everyone |
+| `!task` | Shows personal tasks | Everyone |
+| `!task done 1` | Completes task number 1 | Everyone |
+| `!task remove 1` | Removes task number 1 | Everyone |
+| `!task clear` | Removes completed personal tasks | Everyone |
+| `!task clear all` | Removes every completed task in the channel | Streamer |
 
-Un viewer ne peut jamais modifier les tâches d’un autre viewer. Une personne peut conserver des listes différentes sur plusieurs chaînes.
+A viewer can never change another viewer’s tasks. The same person can keep separate lists across multiple channels.
 
 ## Architecture
 
 ```text
-Chat Twitch ──EventSub──> Worker Cloudflare ──> D1 (données)
-                              │               └──> logos PNG
-                              ├──> API / commandes / OAuth
+Twitch chat ──EventSub──> Cloudflare Worker ──> D1 (data)
+                              │               └──> PNG logos
+                              ├──> API / commands / OAuth
                               │
-                              └──> Durable Object ──WebSocket──> Dashboard + overlay OBS
+                              └──> Durable Object ──WebSocket──> Dashboard + OBS overlay
 ```
 
-Technologies principales : TypeScript, React 19, Vinext/Vite, Cloudflare Workers, D1, Durable Objects, Twitch OAuth et EventSub.
+Core technologies: TypeScript, React 19, Vinext/Vite, Cloudflare Workers, D1, Durable Objects, Twitch OAuth, and EventSub.
 
-Une description plus détaillée est disponible dans [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+A more detailed technical description is available in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-## Installation locale
+## Local development
 
-Prérequis : Node.js 22.13 ou plus récent.
+Requirement: Node.js 22.13 or newer.
 
 ```bash
 git clone https://github.com/galco33/focus-party.git
@@ -66,9 +68,9 @@ npm install
 npm run dev
 ```
 
-Ouvrez ensuite `http://localhost:3000`. Le dashboard et l’overlay peuvent être développés localement. Pour tester le parcours Twitch complet, ajoutez aussi l’URL locale de callback dans votre application Twitch et renseignez les variables nécessaires dans votre environnement local.
+Then open `http://localhost:3000`. You can develop the dashboard and overlay locally. To test the complete Twitch flow, also add the local callback URL to your Twitch application and provide the required local environment variables.
 
-Commandes de contrôle :
+Quality checks:
 
 ```bash
 npm run lint
@@ -76,36 +78,36 @@ npm run typecheck
 npm test
 ```
 
-## Déploiement gratuit sur Cloudflare
+## Free Cloudflare deployment
 
-### 1. Créer la base D1
+### 1. Create the D1 database
 
-Connectez Wrangler à votre compte puis créez une base :
+Connect Wrangler to your account, then create a database:
 
 ```bash
 npx wrangler login
 npx wrangler d1 create focus-party-db
 ```
 
-### 2. Préparer la configuration
+### 2. Prepare the configuration
 
-Copiez `wrangler.example.jsonc` vers `wrangler.cloudflare.jsonc`, puis remplacez :
+Copy `wrangler.example.jsonc` to `wrangler.cloudflare.jsonc`, then replace:
 
-- `VOTRE_NOM_DE_WORKER` ;
-- `VOTRE_DATABASE_ID` par l’identifiant renvoyé à l’étape précédente ;
-- `VOTRE_TWITCH_CLIENT_ID` par le Client ID public de votre application Twitch.
+- `VOTRE_NOM_DE_WORKER` with your Worker name;
+- `VOTRE_DATABASE_ID` with the identifier returned in the previous step;
+- `VOTRE_TWITCH_CLIENT_ID` with your Twitch application’s public Client ID.
 
-Le fichier `wrangler.cloudflare.jsonc` est ignoré par Git afin de garder chaque déploiement personnel séparé du projet public.
+`wrangler.cloudflare.jsonc` is ignored by Git so each personal deployment remains separate from the public project.
 
-### 3. Créer l’application Twitch
+### 3. Create the Twitch application
 
-Dans la [console développeur Twitch](https://dev.twitch.tv/console/apps), créez une application de type **Confidential**. Enregistrez cette URL de redirection, adaptée à votre Worker :
+In the [Twitch developer console](https://dev.twitch.tv/console/apps), create a **Confidential** application. Register this redirect URL, adapted to your Worker:
 
 ```text
-https://VOTRE_WORKER.VOTRE_SOUS_DOMAINE.workers.dev/api/auth/twitch/callback
+https://YOUR_WORKER.YOUR_SUBDOMAIN.workers.dev/api/auth/twitch/callback
 ```
 
-### 4. Enregistrer les secrets
+### 4. Save the secrets
 
 ```bash
 npx wrangler secret put TWITCH_CLIENT_SECRET --config wrangler.cloudflare.jsonc
@@ -113,15 +115,15 @@ npx wrangler secret put TWITCH_EVENTSUB_SECRET --config wrangler.cloudflare.json
 npx wrangler secret put TWITCH_TOKEN_ENCRYPTION_KEY --config wrangler.cloudflare.jsonc
 ```
 
-`TWITCH_CLIENT_SECRET` vient de la console Twitch. Pour les deux autres valeurs, générez deux chaînes aléatoires différentes :
+`TWITCH_CLIENT_SECRET` comes from the Twitch developer console. For the other two values, generate two different random strings:
 
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-La clé `TWITCH_TOKEN_ENCRYPTION_KEY` doit contenir exactement 64 caractères hexadécimaux. Ne publiez jamais ces trois secrets.
+`TWITCH_TOKEN_ENCRYPTION_KEY` must contain exactly 64 hexadecimal characters. Never publish any of these three secrets.
 
-### 5. Initialiser et déployer
+### 5. Initialize and deploy
 
 ```bash
 npm run build
@@ -129,30 +131,30 @@ npx wrangler d1 migrations apply DB --remote --config wrangler.cloudflare.jsonc
 npx wrangler deploy --config wrangler.cloudflare.jsonc
 ```
 
-Ajoutez ensuite l’URL exacte du Worker dans la console Twitch si elle diffère de celle prévue.
+Finally, add the exact Worker URL to the Twitch developer console if it differs from the one you planned.
 
-## Modifier le projet
+## Customizing the project
 
-- Les commandes, permissions, limites et réponses du bot sont dans `lib/focus-party.ts`.
-- L’intégration OAuth/EventSub est dans `lib/twitch.ts` et `app/api/`.
-- Le dashboard est dans `app/Dashboard.tsx`.
-- L’overlay OBS est dans `app/overlay/`.
-- Le style global est dans `app/globals.css`.
-- Le schéma de données est dans `db/schema.ts` et les migrations dans `drizzle/`.
-- Le canal WebSocket est géré dans `worker/index.ts`.
+- Bot commands, permissions, limits, and replies are in `lib/focus-party.ts`.
+- OAuth and EventSub integration is in `lib/twitch.ts` and `app/api/`.
+- The dashboard is in `app/Dashboard.tsx`.
+- The OBS overlay is in `app/overlay/`.
+- Global styles are in `app/globals.css`.
+- The data schema is in `db/schema.ts`, with migrations in `drizzle/`.
+- The WebSocket channel is managed in `worker/index.ts`.
 
-Si vous changez le schéma de la base :
+If you change the database schema:
 
 ```bash
 npm run db:generate
 ```
 
-Puis vérifiez soigneusement la migration créée avant de l’appliquer.
+Carefully review the generated migration before applying it.
 
-## Contribuer
+## Contributing
 
-Les corrections, idées, nouveaux thèmes d’overlay, traductions et nouvelles commandes sont bienvenues. Consultez [CONTRIBUTING.md](CONTRIBUTING.md) avant d’ouvrir une pull request et [SECURITY.md](SECURITY.md) pour signaler une vulnérabilité.
+Bug fixes, ideas, new overlay themes, translations, and new commands are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request and [SECURITY.md](SECURITY.md) to report a vulnerability.
 
-## Licence
+## License
 
-Focus Party est distribué sous licence [MIT](LICENSE). Vous pouvez l’utiliser, le modifier et le redistribuer, y compris dans un projet commercial, à condition de conserver l’avis de licence.
+Focus Party is released under the [MIT License](LICENSE). You may use, modify, and redistribute it, including in commercial projects, as long as you preserve the license notice.
