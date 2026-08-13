@@ -16,6 +16,9 @@ type OverlayState = {
   tasks: Array<{ id: number; userId: string; username: string; text: string; completed: number | boolean }>;
 };
 
+type OverlayTheme = "focus" | "graphite" | "sand" | "ocean" | "plum" | "frost";
+const overlayThemeIds: OverlayTheme[] = ["focus", "graphite", "sand", "ocean", "plum", "frost"];
+
 const fallback: OverlayState = {
   channel: { id: "", username: "focus-party", connected: false },
   timer: { currentSession: 1, totalSessions: 5, focusDuration: 25, breakDuration: 5, status: "IDLE", phase: "FOCUS", remainingSeconds: 1500 },
@@ -29,6 +32,7 @@ function formatTime(seconds: number) {
 export default function Overlay() {
   const [state, setState] = useState(fallback);
   const [display, setDisplay] = useState<"timer" | "tasks" | "combined">("combined");
+  const [theme, setTheme] = useState<OverlayTheme>("focus");
   const taskListRef = useRef<HTMLDivElement>(null);
   const channelId = typeof window === "undefined"
     ? ""
@@ -37,9 +41,15 @@ export default function Overlay() {
   const showTasks = display !== "timer";
 
   useEffect(() => {
-    const requestedDisplay = new URLSearchParams(window.location.search).get("display");
+    const searchParams = new URLSearchParams(window.location.search);
+    const requestedDisplay = searchParams.get("display");
+    const requestedTheme = searchParams.get("theme") as OverlayTheme | null;
     const nextDisplay = requestedDisplay === "timer" || requestedDisplay === "tasks" ? requestedDisplay : "combined";
-    const updateDisplay = window.setTimeout(() => setDisplay(nextDisplay), 0);
+    const nextTheme = requestedTheme && overlayThemeIds.includes(requestedTheme) ? requestedTheme : "focus";
+    const updateDisplay = window.setTimeout(() => {
+      setDisplay(nextDisplay);
+      setTheme(nextTheme);
+    }, 0);
     return () => window.clearTimeout(updateDisplay);
   }, []);
 
@@ -125,7 +135,7 @@ export default function Overlay() {
   }, [showTasks, taskScrollKey]);
 
   return (
-    <main className={`obs-canvas obs-display-${display} phase-${state.timer.phase.toLowerCase()}`}>
+    <main className={`obs-canvas obs-display-${display} obs-theme-${theme} phase-${state.timer.phase.toLowerCase()}`}>
       {showTimer && <section className="obs-widget">
         <div className="obs-topline">
           <div className="obs-brand"><span>✦</span> FOCUS PARTY</div>

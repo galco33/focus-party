@@ -43,6 +43,16 @@ type AppState = {
 };
 
 type OverlayMode = "timer" | "tasks" | "combined";
+type OverlayTheme = "focus" | "graphite" | "sand" | "ocean" | "plum" | "frost";
+
+const overlayThemes: Array<{ id: OverlayTheme; name: string; colors: [string, string, string] }> = [
+  { id: "focus", name: "Focus", colors: ["#171421", "#d9f573", "#fffef9"] },
+  { id: "graphite", name: "Graphite", colors: ["#18191b", "#e5e7eb", "#f5f5f4"] },
+  { id: "sand", name: "Sable", colors: ["#2e2720", "#e7c99c", "#f9f5ee"] },
+  { id: "ocean", name: "Océan", colors: ["#0e232b", "#8fd3c7", "#eff7f6"] },
+  { id: "plum", name: "Prune", colors: ["#261927", "#d8b4d8", "#f9f3f8"] },
+  { id: "frost", name: "Glace", colors: ["#eaf0f4", "#547b8f", "#fafcfd"] },
+];
 
 const fallbackState: AppState = {
   channel: {
@@ -138,6 +148,7 @@ export default function Dashboard() {
   const [toast, setToast] = useState("");
   const [copiedOverlay, setCopiedOverlay] = useState<OverlayMode | null>(null);
   const [previewOverlay, setPreviewOverlay] = useState<OverlayMode>("combined");
+  const [overlayTheme, setOverlayTheme] = useState<OverlayTheme>("focus");
   const chatEndRef = useRef<HTMLDivElement>(null);
   const taskListRef = useRef<HTMLDivElement>(null);
   const taskScrollPausedRef = useRef(false);
@@ -327,9 +338,9 @@ export default function Dashboard() {
     ? ""
     : `${window.location.origin}/overlay?channel=${encodeURIComponent(state.channel.id)}`;
   const overlaySources: Array<{ mode: OverlayMode; title: string; description: string; size: string; url: string }> = [
-    { mode: "timer", title: "Timer uniquement", description: "Le Pomodoro sans la liste des tâches.", size: "900 × 300 px", url: overlayBaseUrl ? `${overlayBaseUrl}&display=timer` : "Connecte Twitch pour obtenir ce lien" },
-    { mode: "tasks", title: "Task List uniquement", description: "Les tâches regroupées par participant.", size: "650 × 700 px", url: overlayBaseUrl ? `${overlayBaseUrl}&display=tasks` : "Connecte Twitch pour obtenir ce lien" },
-    { mode: "combined", title: "Timer + Task List", description: "Le timer et les tâches dans une seule source.", size: "900 × 600 px", url: overlayBaseUrl ? `${overlayBaseUrl}&display=combined` : "Connecte Twitch pour obtenir ce lien" },
+    { mode: "timer", title: "Timer uniquement", description: "Le Pomodoro sans la liste des tâches.", size: "900 × 300 px", url: overlayBaseUrl ? `${overlayBaseUrl}&display=timer&theme=${overlayTheme}` : "Connecte Twitch pour obtenir ce lien" },
+    { mode: "tasks", title: "Task List uniquement", description: "Les tâches regroupées par participant.", size: "650 × 700 px", url: overlayBaseUrl ? `${overlayBaseUrl}&display=tasks&theme=${overlayTheme}` : "Connecte Twitch pour obtenir ce lien" },
+    { mode: "combined", title: "Timer + Task List", description: "Le timer et les tâches dans une seule source.", size: "900 × 600 px", url: overlayBaseUrl ? `${overlayBaseUrl}&display=combined&theme=${overlayTheme}` : "Connecte Twitch pour obtenir ce lien" },
   ];
   const selectedOverlay = overlaySources.find((source) => source.mode === previewOverlay) ?? overlaySources[2];
 
@@ -477,6 +488,18 @@ export default function Dashboard() {
         {activeView === "overlay" && (
           <section className="subpage overlay-page">
             <div className="subpage-intro"><span className="section-icon violet"><Icon name="overlay" /></span><div><small>3 SOURCES NAVIGATEUR</small><h2>Tes overlays OBS</h2><p>Choisis le timer, la Task List, ou les deux. Chaque source reste transparente et synchronisée avec le chat.</p></div></div>
+            <section className="overlay-theme-picker" aria-labelledby="overlay-theme-title">
+              <div className="overlay-theme-heading"><span><small>APPARENCE DE L’OVERLAY</small><strong id="overlay-theme-title">Choisis un thème sobre</strong></span><p>Le thème sélectionné sera inclus dans le lien que tu copieras.</p></div>
+              <div className="overlay-theme-grid" role="group" aria-label="Thèmes de couleurs disponibles">
+                {overlayThemes.map((theme) => (
+                  <button className={overlayTheme === theme.id ? "selected" : ""} key={theme.id} onClick={() => setOverlayTheme(theme.id)} aria-pressed={overlayTheme === theme.id}>
+                    <span className="theme-swatches" aria-hidden="true">{theme.colors.map((color) => <i key={color} style={{ background: color }} />)}</span>
+                    <strong>{theme.name}</strong>
+                    {overlayTheme === theme.id && <em>CHOISI</em>}
+                  </button>
+                ))}
+              </div>
+            </section>
             <div className="overlay-source-grid">
               {overlaySources.map((source) => (
                 <article className={`overlay-source-card ${previewOverlay === source.mode ? "selected" : ""}`} key={source.mode}>
@@ -489,7 +512,7 @@ export default function Dashboard() {
                 </article>
               ))}
             </div>
-            {state.channel.id && <div className="overlay-preview-shell"><div className="preview-label"><span>APERÇU — {selectedOverlay.title.toUpperCase()}</span><a href={selectedOverlay.url} target="_blank" rel="noreferrer">Ouvrir dans un nouvel onglet ↗</a></div><iframe className={`preview-${selectedOverlay.mode}`} key={selectedOverlay.mode} title={`Aperçu OBS — ${selectedOverlay.title}`} src={selectedOverlay.url} /></div>}
+            {state.channel.id && <div className="overlay-preview-shell"><div className="preview-label"><span>APERÇU — {selectedOverlay.title.toUpperCase()} · {overlayThemes.find((theme) => theme.id === overlayTheme)?.name.toUpperCase()}</span><a href={selectedOverlay.url} target="_blank" rel="noreferrer">Ouvrir dans un nouvel onglet ↗</a></div><iframe className={`preview-${selectedOverlay.mode}`} key={`${selectedOverlay.mode}-${overlayTheme}`} title={`Aperçu OBS — ${selectedOverlay.title}`} src={selectedOverlay.url} /></div>}
             <div className="obs-steps"><div><span>1</span><p><strong>Choisis ta source</strong>Timer, Task List ou les deux.</p></div><div><span>2</span><p><strong>Copie son URL</strong>Ajoute une source « Navigateur » dans OBS.</p></div><div><span>3</span><p><strong>Utilise la taille indiquée</strong>Tu peux ensuite la placer librement dans ta scène.</p></div></div>
           </section>
         )}
