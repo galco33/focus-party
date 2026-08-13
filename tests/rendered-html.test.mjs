@@ -23,6 +23,7 @@ test("server-renders the Focus Party dashboard", async () => {
   assert.match(html, /application\/ld\+json/);
   assert.match(html, /SoftwareApplication/);
   assert.match(html, /rel="canonical"/);
+  assert.match(html, /name="google-site-verification"/);
   assert.match(html, /FOCUS/);
   assert.match(html, /Dashboard/);
   assert.match(html, /Se connecter à Twitch/);

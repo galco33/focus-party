@@ -25,6 +25,9 @@ export async function generateMetadata(): Promise<Metadata> {
     description,
     applicationName: "Focus Party",
     category: "productivity",
+    verification: {
+      google: "pEL0-TOvrVmBboUJLt391cWOmSn1zpQlgUhMjTqO628",
+    },
     keywords: ["pomodoro Twitch", "overlay Twitch", "overlay OBS", "timer Pomodoro OBS", "bot Twitch gratuit", "dashboard streamer gratuit", "Task List Twitch", "commandes chat Twitch", "productivité streaming", "Pomodoro open source"],
     alternates: { canonical: "/" },
     robots: {
