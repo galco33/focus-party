@@ -15,7 +15,7 @@ type OverlayState = {
     phase: "FOCUS" | "BREAK";
     remainingSeconds: number;
   };
-  tasks: Array<{ id: number; userId: string; username: string; text: string; completed: number | boolean }>;
+  tasks: Array<{ id: number; userId: string; username: string; text: string; completed: number | boolean; focused: number | boolean }>;
   branding: {
     hasLogo: boolean;
     position: "top-left" | "top-right" | "bottom-left" | "bottom-right";
@@ -118,7 +118,8 @@ export default function Overlay() {
     }
     return Array.from(groups.entries()).map(([id, group]) => ({ id, ...group }));
   }, [state.tasks]);
-  const taskScrollKey = state.tasks.map((task) => `${task.id}:${Number(Boolean(task.completed))}`).join("|");
+  const taskScrollKey = state.tasks.map((task) => `${task.id}:${Number(Boolean(task.completed))}:${Number(Boolean(task.focused))}`).join("|");
+  const completedTasks = state.tasks.filter((task) => Boolean(task.completed)).length;
   const logoUrl = state.branding.hasLogo && channelId
     ? `/api/logo?channel=${encodeURIComponent(channelId)}&v=${encodeURIComponent(state.branding.updatedAt ?? "logo")}`
     : "";
@@ -178,14 +179,14 @@ export default function Overlay() {
       </section>}
       {showTasks && (
         <section className="obs-tasks" aria-label={copy.taskList}>
-          <header className="obs-task-header"><code>!taskhelp</code><span><strong>{state.tasks.length}</strong>/30</span></header>
+          <header className="obs-task-header"><code>!taskhelp</code><span><strong>{completedTasks}</strong>/{state.tasks.length}</span></header>
           <div className="obs-task-scroll" ref={taskListRef}>
             {taskGroups.length ? taskGroups.map((group) => (
               <section className="obs-task-group" key={group.id}>
                 <header><strong>{group.username}</strong></header>
                 <ol className="obs-task-items">
                   {group.tasks.map((task) => (
-                    <li className={`obs-task-row ${task.completed ? "done" : ""}`} key={task.id}>
+                    <li className={`obs-task-row${task.completed ? " done" : ""}${task.focused ? " focused" : ""}`} aria-current={task.focused ? "true" : undefined} key={task.id}>
                       <span>{task.text}</span>
                     </li>
                   ))}

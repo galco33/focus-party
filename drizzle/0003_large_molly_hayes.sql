@@ -1,0 +1,1 @@
+ALTER TABLE `tasks` ADD `focused` integer DEFAULT false NOT NULL;

@@ -44,7 +44,7 @@ test("server-renders the dashboard on its dedicated route", async () => {
   assert.match(html, /Commandes Twitch/);
   assert.match(html, /TASK LIST/);
   assert.match(html, /!taskhelp/);
-  assert.match(html, />0<\/strong>\/30/);
+  assert.match(html, />0<\/strong>\/(?:<!-- -->)?0/);
   assert.doesNotMatch(html, /!task remove 1/);
   assert.match(html, /name="robots" content="noindex, nofollow, nocache"/);
 });
@@ -58,14 +58,15 @@ test("server-renders the dedicated OBS overlay", async () => {
   assert.match(html, /PRÊT/);
   assert.match(html, /LISTE DES TÂCHES/);
   assert.match(html, /!taskhelp/);
-  assert.match(html, />0<\/strong>\/30/);
+  assert.match(html, />0<\/strong>\/(?:<!-- -->)?0/);
 });
 
 test("keeps persistence, SEO, overlay modes and starter cleanup explicit", async () => {
-  const [hosting, migration, brandingMigration, packageJson, landingSource, dashboardSource, callbackSource, overlaySource, brandingRoute, i18nSource, layoutSource, robotsSource, sitemapSource, focusPartySource] = await Promise.all([
+  const [hosting, migration, brandingMigration, taskFocusMigration, packageJson, landingSource, dashboardSource, callbackSource, overlaySource, brandingRoute, i18nSource, layoutSource, robotsSource, sitemapSource, focusPartySource] = await Promise.all([
     readFile(new URL("../.openai/hosting.json", import.meta.url), "utf8"),
     readFile(new URL("../drizzle/0000_init_focus_party.sql", import.meta.url), "utf8"),
     readFile(new URL("../drizzle/0002_short_miracleman.sql", import.meta.url), "utf8"),
+    readFile(new URL("../drizzle/0003_large_molly_hayes.sql", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
     readFile(new URL("../app/LandingPage.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/Dashboard.tsx", import.meta.url), "utf8"),
@@ -84,6 +85,7 @@ test("keeps persistence, SEO, overlay modes and starter cleanup explicit", async
   assert.match(migration, /idx_tasks_channel_user/);
   assert.match(brandingMigration, /CREATE TABLE `overlay_branding`/);
   assert.match(brandingMigration, /`logo_data` blob/);
+  assert.match(taskFocusMigration, /ALTER TABLE `tasks` ADD `focused` integer DEFAULT false NOT NULL/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
   assert.match(landingSource, /Se connecter/);
   assert.match(landingSource, /Connect with Twitch/);
@@ -113,9 +115,12 @@ test("keeps persistence, SEO, overlay modes and starter cleanup explicit", async
   assert.match(overlaySource, /obs-theme-\$\{theme\}/);
   assert.match(overlaySource, /obs-layout-\$\{timerLayout\}/);
   assert.match(overlaySource, /obs-task-items/);
+  assert.match(overlaySource, /task\.focused/);
   assert.doesNotMatch(overlaySource, /obs-task-row.*✓/);
   assert.match(focusPartySource, /"!taskhelp"/);
-  assert.match(focusPartySource, /!task done 1.*!task remove 1/);
+  assert.match(focusPartySource, /!task focus 1.*!task edit 1.*!task done 1.*!task remove 1/);
+  assert.match(focusPartySource, /UPDATE tasks SET focused = 0/);
+  assert.match(focusPartySource, /UPDATE tasks SET text = \?/);
   assert.match(overlaySource, /"accessible"/);
   assert.match(i18nSource, /Daltonisme.*Color-safe.*Daltonismo/s);
   assert.match(layoutSource, /Pomodoro Twitch gratuit avec overlay OBS/);

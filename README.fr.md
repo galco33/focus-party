@@ -36,6 +36,9 @@ Le projet est entièrement open source sous licence MIT. Vous pouvez le forker, 
 | `!pomo status` | Affiche l’état actuel | Tout le monde |
 | `!task add Mon objectif` | Ajoute une tâche personnelle | Tout le monde |
 | `!task` | Affiche ses tâches | Tout le monde |
+| `!taskhelp` | Affiche l’aide des commandes Task List | Tout le monde |
+| `!task focus 1` | Met en avant la tâche n°1 comme tâche active | Tout le monde |
+| `!task edit 1 Nouvel objectif` | Modifie la tâche n°1 | Tout le monde |
 | `!task done 1` | Termine sa tâche n°1 | Tout le monde |
 | `!task remove 1` | Supprime sa tâche n°1 | Tout le monde |
 | `!task clear` | Supprime ses tâches terminées | Tout le monde |

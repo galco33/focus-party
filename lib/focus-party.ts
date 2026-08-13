@@ -137,8 +137,8 @@ export async function getState(database: D1Database, channelId: string) {
   const [timer, tasks, chat, branding] = await Promise.all([
     getTimer(database, channelId),
     database.prepare(
-      `SELECT id, user_id AS userId, username, text, completed, created_at AS createdAt
-       FROM tasks WHERE channel_id = ? ORDER BY completed ASC, id DESC LIMIT 30`,
+      `SELECT id, user_id AS userId, username, text, completed, focused, created_at AS createdAt
+       FROM tasks WHERE channel_id = ? ORDER BY id ASC LIMIT 30`,
     ).bind(channelId).all(),
     database.prepare(
       `SELECT id, username, role, message, reply, created_at
@@ -280,7 +280,7 @@ export async function runCommand(
       return `Timer réglé sur ${match[1]} min de focus / ${match[2]} min de pause.`;
     },
     "!taskhelp": async () => (
-      "Commandes Task List : !task · !task add … · !task done 1 · !task remove 1 · !task clear"
+      "Commandes Task List : !task · !task add … · !task focus 1 · !task edit 1 … · !task done 1 · !task remove 1 · !task clear"
     ),
     "!task": async () => {
       await database.prepare(
@@ -288,11 +288,11 @@ export async function runCommand(
       ).bind(actor.id, actor.id, actor.username).run();
       if (!sub) {
         const own = await database.prepare(
-          "SELECT text, completed FROM tasks WHERE channel_id = ? AND user_id = ? ORDER BY id ASC",
-        ).bind(channelId, actor.id).all<{ text: string; completed: number }>();
+          "SELECT text, completed, focused FROM tasks WHERE channel_id = ? AND user_id = ? ORDER BY id ASC",
+        ).bind(channelId, actor.id).all<{ text: string; completed: number; focused: number }>();
         if (!own.results.length) return "Votre liste est vide. Ajoutez une tâche avec !task add …";
         return own.results
-          .map((task, index) => `${index + 1}. ${task.completed ? "✅" : "⬜"} ${task.text}`)
+          .map((task, index) => `${index + 1}. ${task.completed ? "✅" : task.focused ? "🎯" : "⬜"} ${task.text}`)
           .join(" · ");
       }
       if (sub === "add") {
@@ -321,24 +321,45 @@ export async function runCommand(
         ).bind(channelId, actor.id).run();
         return "Vos tâches terminées ont été nettoyées.";
       }
-      if ((sub === "done" || sub === "remove") && /^\d+$/.test(args[0] ?? "")) {
+      if (["focus", "edit", "done", "remove"].includes(sub) && /^\d+$/.test(args[0] ?? "")) {
         const position = Number(args[0]);
         const selected = await database.prepare(
-          "SELECT id, text FROM tasks WHERE channel_id = ? AND user_id = ? ORDER BY id ASC LIMIT 1 OFFSET ?",
-        ).bind(channelId, actor.id, position - 1).first<{ id: number; text: string }>();
+          "SELECT id, text, completed FROM tasks WHERE channel_id = ? AND user_id = ? ORDER BY id ASC LIMIT 1 OFFSET ?",
+        ).bind(channelId, actor.id, position - 1).first<{ id: number; text: string; completed: number }>();
         if (!selected) throw new Error("Ce numéro de tâche n’existe pas dans votre liste.");
+        if (sub === "focus") {
+          if (selected.completed) throw new Error("Une tâche terminée ne peut pas devenir la tâche active.");
+          await database.batch([
+            database.prepare(
+              "UPDATE tasks SET focused = 0 WHERE channel_id = ? AND user_id = ?",
+            ).bind(channelId, actor.id),
+            database.prepare(
+              "UPDATE tasks SET focused = 1 WHERE id = ? AND channel_id = ? AND user_id = ?",
+            ).bind(selected.id, channelId, actor.id),
+          ]);
+          return `Tâche active : « ${selected.text} ».`;
+        }
+        if (sub === "edit") {
+          const nextText = args.slice(1).join(" ").trim();
+          if (!nextText) throw new Error("Ajoutez le nouveau texte après !task edit 1.");
+          if (nextText.length > 120) throw new Error("Une tâche ne peut pas dépasser 120 caractères.");
+          await database.prepare(
+            "UPDATE tasks SET text = ? WHERE id = ? AND channel_id = ? AND user_id = ?",
+          ).bind(nextText, selected.id, channelId, actor.id).run();
+          return `Tâche modifiée : « ${nextText} ».`;
+        }
         if (sub === "done") {
           await database.prepare(
-            "UPDATE tasks SET completed = 1, completed_at = ? WHERE id = ? AND user_id = ?",
-          ).bind(new Date().toISOString(), selected.id, actor.id).run();
+            "UPDATE tasks SET completed = 1, focused = 0, completed_at = ? WHERE id = ? AND channel_id = ? AND user_id = ?",
+          ).bind(new Date().toISOString(), selected.id, channelId, actor.id).run();
           return `Bravo ! « ${selected.text} » est terminée.`;
         }
         await database.prepare(
-          "DELETE FROM tasks WHERE id = ? AND user_id = ?",
-        ).bind(selected.id, actor.id).run();
+          "DELETE FROM tasks WHERE id = ? AND channel_id = ? AND user_id = ?",
+        ).bind(selected.id, channelId, actor.id).run();
         return `Tâche supprimée : ${selected.text}`;
       }
-      throw new Error("Commande tâche inconnue. Essayez !task add, done, remove ou clear.");
+      throw new Error("Commande tâche inconnue. Essayez !task add, focus, edit, done, remove ou clear.");
     },
   };
 

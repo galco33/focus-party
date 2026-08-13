@@ -36,6 +36,9 @@ The project is fully open source under the MIT License. You can fork it, customi
 | `!pomo status` | Shows the current timer status | Everyone |
 | `!task add My goal` | Adds a personal task | Everyone |
 | `!task` | Shows personal tasks | Everyone |
+| `!taskhelp` | Shows the Task List command help | Everyone |
+| `!task focus 1` | Highlights task number 1 as the active task | Everyone |
+| `!task edit 1 New goal` | Edits task number 1 | Everyone |
 | `!task done 1` | Completes task number 1 | Everyone |
 | `!task remove 1` | Removes task number 1 | Everyone |
 | `!task clear` | Removes completed personal tasks | Everyone |

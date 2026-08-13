@@ -27,6 +27,7 @@ export const tasks = sqliteTable("tasks", {
   username: text("username").notNull(),
   text: text("text").notNull(),
   completed: integer("completed", { mode: "boolean" }).notNull().default(false),
+  focused: integer("focused", { mode: "boolean" }).notNull().default(false),
   createdAt: text("created_at").notNull(),
   completedAt: text("completed_at"),
 }, (table) => [index("idx_tasks_channel_user").on(table.channelId, table.userId)]);

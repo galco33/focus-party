@@ -19,6 +19,7 @@ type Task = {
   username: string;
   text: string;
   completed: number | boolean;
+  focused: number | boolean;
 };
 
 type ChatEvent = {
@@ -102,6 +103,8 @@ const commandGroups = [
   { command: "!task", access: "everyone" },
   { command: "!taskhelp", access: "everyone" },
   { command: "!task add …", access: "everyone" },
+  { command: "!task focus 1", access: "everyone" },
+  { command: "!task edit 1 …", access: "everyone" },
   { command: "!task done 1", access: "everyone" },
   { command: "!task remove 1", access: "everyone" },
   { command: "!task clear", access: "everyone" },
@@ -292,7 +295,7 @@ export default function Dashboard() {
   }, [logoPreviewUrl]);
 
   const taskScrollKey = state.tasks
-    .map((task) => `${task.id}:${Number(Boolean(task.completed))}`)
+    .map((task) => `${task.id}:${Number(Boolean(task.completed))}:${Number(Boolean(task.focused))}`)
     .join("|");
 
   useEffect(() => {
@@ -576,7 +579,7 @@ export default function Dashboard() {
                 <div className="community-stats"><div><strong>{state.tasks.length}</strong><span>{copy.totalTasks}</span></div><div><strong>{completedCount}</strong><span>{copy.completedPlural}</span></div><div><strong>{participantCount}</strong><span>{copy.participants}</span></div></div>
                 <div className="task-list-header" aria-label={copy.taskList}>
                   <code>!taskhelp</code>
-                  <span><strong>{state.tasks.length}</strong>/30</span>
+                  <span><strong>{completedCount}</strong>/{state.tasks.length}</span>
                 </div>
                 <div className="task-list-frame">
                   <div
@@ -595,7 +598,7 @@ export default function Dashboard() {
                         </header>
                         <ol className="task-person-items">
                           {group.tasks.map((task) => (
-                            <li className={`task-row ${task.completed ? "done" : ""}`} key={task.id}>
+                            <li className={`task-row${task.completed ? " done" : ""}${task.focused ? " focused" : ""}`} aria-current={task.focused ? "true" : undefined} key={task.id}>
                               <span>{task.text}</span>
                             </li>
                           ))}

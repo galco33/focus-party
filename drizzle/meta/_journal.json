@@ -22,6 +22,13 @@
       "when": 1786620021055,
       "tag": "0002_short_miracleman",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1786655580448,
+      "tag": "0003_large_molly_hayes",
+      "breakpoints": true
     }
   ]
 }
