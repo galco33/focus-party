@@ -13,7 +13,7 @@ async function render(path = "/") {
   );
 }
 
-test("server-renders the Focus Party dashboard", async () => {
+test("server-renders the public Focus Party landing page", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
@@ -24,14 +24,27 @@ test("server-renders the Focus Party dashboard", async () => {
   assert.match(html, /SoftwareApplication/);
   assert.match(html, /rel="canonical"/);
   assert.match(html, /name="google-site-verification"/);
-  assert.match(html, /FOCUS/);
-  assert.match(html, /Dashboard/);
+  assert.match(html, /Le focus devient/);
   assert.match(html, /Se connecter à Twitch/);
+  assert.match(html, /Le produit en images/i);
+  assert.match(html, /Timer Pomodoro/);
+  assert.match(html, /Task List communautaire/);
+  assert.match(html, /api\/auth\/twitch\/start/);
+  assert.match(html, /TASK LIST/);
+  assert.doesNotMatch(html, /!task remove 1/);
+  assert.doesNotMatch(html, /simulateur|noctua_dev/i);
+  assert.doesNotMatch(html, /codex-preview|react-loading-skeleton|Your site is taking shape/);
+});
+
+test("server-renders the dashboard on its dedicated route", async () => {
+  const response = await render("/dashboard");
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /Dashboard/);
   assert.match(html, /Commandes Twitch/);
   assert.match(html, /TASK LIST/);
   assert.match(html, /!task remove 1/);
-  assert.doesNotMatch(html, /simulateur|noctua_dev/i);
-  assert.doesNotMatch(html, /codex-preview|react-loading-skeleton|Your site is taking shape/);
+  assert.match(html, /name="robots" content="noindex, nofollow, nocache"/);
 });
 
 test("server-renders the dedicated OBS overlay", async () => {
@@ -45,12 +58,14 @@ test("server-renders the dedicated OBS overlay", async () => {
 });
 
 test("keeps persistence, SEO, overlay modes and starter cleanup explicit", async () => {
-  const [hosting, migration, brandingMigration, packageJson, dashboardSource, overlaySource, brandingRoute, i18nSource, layoutSource, robotsSource, sitemapSource] = await Promise.all([
+  const [hosting, migration, brandingMigration, packageJson, landingSource, dashboardSource, callbackSource, overlaySource, brandingRoute, i18nSource, layoutSource, robotsSource, sitemapSource] = await Promise.all([
     readFile(new URL("../.openai/hosting.json", import.meta.url), "utf8"),
     readFile(new URL("../drizzle/0000_init_focus_party.sql", import.meta.url), "utf8"),
     readFile(new URL("../drizzle/0002_short_miracleman.sql", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
+    readFile(new URL("../app/LandingPage.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/Dashboard.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/auth/twitch/callback/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/overlay/Overlay.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/branding/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/i18n.ts", import.meta.url), "utf8"),
@@ -65,6 +80,13 @@ test("keeps persistence, SEO, overlay modes and starter cleanup explicit", async
   assert.match(brandingMigration, /CREATE TABLE `overlay_branding`/);
   assert.match(brandingMigration, /`logo_data` blob/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
+  assert.match(landingSource, /Se connecter/);
+  assert.match(landingSource, /Connect with Twitch/);
+  assert.match(landingSource, /Conectar con Twitch/);
+  assert.match(landingSource, /focus-party-visual-theme/);
+  assert.match(landingSource, /\/api\/auth\/twitch\/start/);
+  assert.match(callbackSource, /"\/dashboard"/);
+  assert.match(dashboardSource, /window\.location\.assign\("\/"\)/);
   assert.match(i18nSource, /Timer uniquement/);
   assert.match(i18nSource, /Task List uniquement/);
   assert.match(i18nSource, /Timer \+ Task List/);

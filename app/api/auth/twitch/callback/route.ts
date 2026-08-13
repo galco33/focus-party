@@ -9,8 +9,8 @@ import {
   validateTwitchToken,
 } from "@/lib/twitch";
 
-function redirectHome(request: Request, status: "connected" | "error" | "warning") {
-  const url = new URL("/", request.url);
+function redirectAfterAuth(request: Request, status: "connected" | "error" | "warning") {
+  const url = new URL(status === "error" ? "/" : "/dashboard", request.url);
   url.searchParams.set("twitch", status);
   return url.toString();
 }
@@ -20,7 +20,7 @@ export async function GET(request: Request) {
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
   if (!code || !state || !(await consumeOAuthState(env.DB, state))) {
-    return Response.redirect(redirectHome(request, "error"), 302);
+    return Response.redirect(redirectAfterAuth(request, "error"), 302);
   }
 
   try {
@@ -44,13 +44,13 @@ export async function GET(request: Request) {
     return new Response(null, {
       status: 302,
       headers: {
-        Location: redirectHome(request, result),
+        Location: redirectAfterAuth(request, result),
         "Set-Cookie": await createSession(env.DB, channelId),
         "Cache-Control": "no-store",
       },
     });
   } catch (error) {
     console.error(JSON.stringify({ message: "twitch_oauth_failed", error: String(error) }));
-    return Response.redirect(redirectHome(request, "error"), 302);
+    return Response.redirect(redirectAfterAuth(request, "error"), 302);
   }
 }

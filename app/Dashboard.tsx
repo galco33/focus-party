@@ -387,7 +387,7 @@ export default function Dashboard() {
       const response = await fetch("/api/auth/twitch/disconnect", { method: "POST" });
       if (!response.ok) throw new Error(copy.disconnectFailed);
       applyState(fallbackState);
-      notify(copy.twitchDisconnected);
+      window.location.assign("/");
     } catch (error) {
       notify(error instanceof Error ? error.message : copy.genericError);
     } finally {

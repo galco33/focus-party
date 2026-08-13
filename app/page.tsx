@@ -1,4 +1,4 @@
-import Dashboard from "./Dashboard";
+import LandingPage from "./LandingPage";
 
 const publicSiteUrl = "https://focus-party-pomodoro-g97.focus-party-g97.workers.dev";
 
@@ -34,7 +34,7 @@ export default function Home() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
-      <Dashboard />
+      <LandingPage />
     </>
   );
 }
