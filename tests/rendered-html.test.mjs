@@ -56,8 +56,11 @@ test("keeps persistence, overlay modes and starter cleanup explicit", async () =
   assert.match(dashboardSource, /Timer \+ Task List/);
   assert.match(dashboardSource, /Focus.*Graphite.*Sable.*Océan.*Prune.*Glace/s);
   assert.match(dashboardSource, /theme=\$\{overlayTheme\}/);
+  assert.match(dashboardSource, /Classique.*Essentiel.*Compact.*Centré.*Ligne.*Contour/s);
+  assert.match(dashboardSource, /timerStyle=\$\{timerLayout\}/);
   assert.match(overlaySource, /display !== "tasks"/);
   assert.match(overlaySource, /display !== "timer"/);
   assert.match(overlaySource, /obs-theme-\$\{theme\}/);
+  assert.match(overlaySource, /obs-layout-\$\{timerLayout\}/);
   await assert.rejects(access(new URL("../app/_sites-preview/SkeletonPreview.tsx", import.meta.url)));
 });

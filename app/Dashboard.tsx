@@ -44,6 +44,7 @@ type AppState = {
 
 type OverlayMode = "timer" | "tasks" | "combined";
 type OverlayTheme = "focus" | "graphite" | "sand" | "ocean" | "plum" | "frost";
+type TimerLayout = "classic" | "essential" | "compact" | "centered" | "line" | "outline";
 
 const overlayThemes: Array<{ id: OverlayTheme; name: string; colors: [string, string, string] }> = [
   { id: "focus", name: "Focus", colors: ["#171421", "#d9f573", "#fffef9"] },
@@ -52,6 +53,15 @@ const overlayThemes: Array<{ id: OverlayTheme; name: string; colors: [string, st
   { id: "ocean", name: "Océan", colors: ["#0e232b", "#8fd3c7", "#eff7f6"] },
   { id: "plum", name: "Prune", colors: ["#261927", "#d8b4d8", "#f9f3f8"] },
   { id: "frost", name: "Glace", colors: ["#eaf0f4", "#547b8f", "#fafcfd"] },
+];
+
+const timerLayouts: Array<{ id: TimerLayout; name: string; description: string }> = [
+  { id: "classic", name: "Classique", description: "Toutes les informations" },
+  { id: "essential", name: "Essentiel", description: "Le temps avant tout" },
+  { id: "compact", name: "Compact", description: "Moins de hauteur" },
+  { id: "centered", name: "Centré", description: "Composition symétrique" },
+  { id: "line", name: "Ligne", description: "Format horizontal" },
+  { id: "outline", name: "Contour", description: "Cadre fin et discret" },
 ];
 
 const fallbackState: AppState = {
@@ -149,6 +159,7 @@ export default function Dashboard() {
   const [copiedOverlay, setCopiedOverlay] = useState<OverlayMode | null>(null);
   const [previewOverlay, setPreviewOverlay] = useState<OverlayMode>("combined");
   const [overlayTheme, setOverlayTheme] = useState<OverlayTheme>("focus");
+  const [timerLayout, setTimerLayout] = useState<TimerLayout>("classic");
   const chatEndRef = useRef<HTMLDivElement>(null);
   const taskListRef = useRef<HTMLDivElement>(null);
   const taskScrollPausedRef = useRef(false);
@@ -338,9 +349,9 @@ export default function Dashboard() {
     ? ""
     : `${window.location.origin}/overlay?channel=${encodeURIComponent(state.channel.id)}`;
   const overlaySources: Array<{ mode: OverlayMode; title: string; description: string; size: string; url: string }> = [
-    { mode: "timer", title: "Timer uniquement", description: "Le Pomodoro sans la liste des tâches.", size: "900 × 300 px", url: overlayBaseUrl ? `${overlayBaseUrl}&display=timer&theme=${overlayTheme}` : "Connecte Twitch pour obtenir ce lien" },
+    { mode: "timer", title: "Timer uniquement", description: "Le Pomodoro sans la liste des tâches.", size: "900 × 300 px", url: overlayBaseUrl ? `${overlayBaseUrl}&display=timer&theme=${overlayTheme}&timerStyle=${timerLayout}` : "Connecte Twitch pour obtenir ce lien" },
     { mode: "tasks", title: "Task List uniquement", description: "Les tâches regroupées par participant.", size: "650 × 700 px", url: overlayBaseUrl ? `${overlayBaseUrl}&display=tasks&theme=${overlayTheme}` : "Connecte Twitch pour obtenir ce lien" },
-    { mode: "combined", title: "Timer + Task List", description: "Le timer et les tâches dans une seule source.", size: "900 × 600 px", url: overlayBaseUrl ? `${overlayBaseUrl}&display=combined&theme=${overlayTheme}` : "Connecte Twitch pour obtenir ce lien" },
+    { mode: "combined", title: "Timer + Task List", description: "Le timer et les tâches dans une seule source.", size: "900 × 600 px", url: overlayBaseUrl ? `${overlayBaseUrl}&display=combined&theme=${overlayTheme}&timerStyle=${timerLayout}` : "Connecte Twitch pour obtenir ce lien" },
   ];
   const selectedOverlay = overlaySources.find((source) => source.mode === previewOverlay) ?? overlaySources[2];
 
@@ -500,6 +511,18 @@ export default function Dashboard() {
                 ))}
               </div>
             </section>
+            <section className="timer-layout-picker" aria-labelledby="timer-layout-title">
+              <div className="overlay-theme-heading"><span><small>MODÈLE DU TIMER</small><strong id="timer-layout-title">Choisis une présentation</strong></span><p>Le modèle s’applique au timer seul et à la source combinée.</p></div>
+              <div className="timer-layout-grid" role="group" aria-label="Modèles de timer disponibles">
+                {timerLayouts.map((layout) => (
+                  <button className={timerLayout === layout.id ? "selected" : ""} key={layout.id} onClick={() => setTimerLayout(layout.id)} aria-pressed={timerLayout === layout.id}>
+                    <span className={`timer-layout-mini mini-${layout.id}`} aria-hidden="true"><i /><b /><em /></span>
+                    <span><strong>{layout.name}</strong><small>{layout.description}</small></span>
+                    {timerLayout === layout.id && <em>CHOISI</em>}
+                  </button>
+                ))}
+              </div>
+            </section>
             <div className="overlay-source-grid">
               {overlaySources.map((source) => (
                 <article className={`overlay-source-card ${previewOverlay === source.mode ? "selected" : ""}`} key={source.mode}>
@@ -512,7 +535,7 @@ export default function Dashboard() {
                 </article>
               ))}
             </div>
-            {state.channel.id && <div className="overlay-preview-shell"><div className="preview-label"><span>APERÇU — {selectedOverlay.title.toUpperCase()} · {overlayThemes.find((theme) => theme.id === overlayTheme)?.name.toUpperCase()}</span><a href={selectedOverlay.url} target="_blank" rel="noreferrer">Ouvrir dans un nouvel onglet ↗</a></div><iframe className={`preview-${selectedOverlay.mode}`} key={`${selectedOverlay.mode}-${overlayTheme}`} title={`Aperçu OBS — ${selectedOverlay.title}`} src={selectedOverlay.url} /></div>}
+            {state.channel.id && <div className="overlay-preview-shell"><div className="preview-label"><span>APERÇU — {selectedOverlay.title.toUpperCase()} · {overlayThemes.find((theme) => theme.id === overlayTheme)?.name.toUpperCase()}{selectedOverlay.mode !== "tasks" ? ` · ${timerLayouts.find((layout) => layout.id === timerLayout)?.name.toUpperCase()}` : ""}</span><a href={selectedOverlay.url} target="_blank" rel="noreferrer">Ouvrir dans un nouvel onglet ↗</a></div><iframe className={`preview-${selectedOverlay.mode}`} key={`${selectedOverlay.mode}-${overlayTheme}-${timerLayout}`} title={`Aperçu OBS — ${selectedOverlay.title}`} src={selectedOverlay.url} /></div>}
             <div className="obs-steps"><div><span>1</span><p><strong>Choisis ta source</strong>Timer, Task List ou les deux.</p></div><div><span>2</span><p><strong>Copie son URL</strong>Ajoute une source « Navigateur » dans OBS.</p></div><div><span>3</span><p><strong>Utilise la taille indiquée</strong>Tu peux ensuite la placer librement dans ta scène.</p></div></div>
           </section>
         )}
