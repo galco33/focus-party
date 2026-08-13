@@ -279,6 +279,9 @@ export async function runCommand(
       });
       return `Timer réglé sur ${match[1]} min de focus / ${match[2]} min de pause.`;
     },
+    "!taskhelp": async () => (
+      "Commandes Task List : !task · !task add … · !task done 1 · !task remove 1 · !task clear"
+    ),
     "!task": async () => {
       await database.prepare(
         "INSERT OR IGNORE INTO users (id, twitch_user_id, username) VALUES (?, ?, ?)",

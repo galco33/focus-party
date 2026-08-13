@@ -100,14 +100,13 @@ const commandGroups = [
   { command: "!pomo pause", access: "streamer" },
   { command: "!pomo status", access: "everyone" },
   { command: "!task", access: "everyone" },
+  { command: "!taskhelp", access: "everyone" },
   { command: "!task add …", access: "everyone" },
   { command: "!task done 1", access: "everyone" },
   { command: "!task remove 1", access: "everyone" },
   { command: "!task clear", access: "everyone" },
   { command: "!task clear all", access: "streamer" },
 ];
-
-const taskCommandHints = ["!task", "!task add …", "!task done 1", "!task remove 1", "!task clear"];
 
 function groupTasksByParticipant(tasks: Task[]) {
   const groups = new Map<string, { userId: string; username: string; tasks: Task[] }>();
@@ -575,11 +574,9 @@ export default function Dashboard() {
               <section className="community-card">
                 <div className="card-heading"><div><span className="section-icon mint"><Icon name="tasks" /></span><div><small>{copy.chatGoals}</small><h2>{copy.communityTasks}</h2></div></div><button onClick={() => setActiveView("commands")}>{copy.viewCommands} →</button></div>
                 <div className="community-stats"><div><strong>{state.tasks.length}</strong><span>{copy.totalTasks}</span></div><div><strong>{completedCount}</strong><span>{copy.completedPlural}</span></div><div><strong>{participantCount}</strong><span>{copy.participants}</span></div></div>
-                <div className="task-list-header">
-                  <strong>{copy.taskList}</strong>
-                  <div className="task-command-hints" aria-label={copy.taskHints}>
-                    {taskCommandHints.map((command) => <code key={command}>{command}</code>)}
-                  </div>
+                <div className="task-list-header" aria-label={copy.taskList}>
+                  <code>!taskhelp</code>
+                  <span><strong>{state.tasks.length}</strong>/30</span>
                 </div>
                 <div className="task-list-frame">
                   <div
@@ -594,17 +591,15 @@ export default function Dashboard() {
                     {taskGroups.length ? taskGroups.map((group) => (
                       <section className="task-person-group" key={group.userId}>
                         <header className="task-person-heading">
-                          <span>{group.username.slice(0, 1).toUpperCase()}</span>
                           <strong>{group.username}</strong>
-                          <small>{group.tasks.length} {group.tasks.length > 1 ? copy.tasks : copy.task}</small>
                         </header>
-                        {group.tasks.map((task, index) => (
-                          <div className={`task-row ${task.completed ? "done" : ""}`} key={task.id}>
-                            <span className="task-check">{task.completed ? "✓" : ""}</span>
-                            <span className="task-copy"><small>{index + 1}</small><strong>{task.text}</strong></span>
-                            <em>{task.completed ? copy.completedStatus : copy.inProgress}</em>
-                          </div>
-                        ))}
+                        <ol className="task-person-items">
+                          {group.tasks.map((task) => (
+                            <li className={`task-row ${task.completed ? "done" : ""}`} key={task.id}>
+                              <span>{task.text}</span>
+                            </li>
+                          ))}
+                        </ol>
                       </section>
                     )) : <p className="empty-state">{copy.emptyTasks}</p>}
                   </div>

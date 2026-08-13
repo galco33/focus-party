@@ -177,17 +177,19 @@ export default function Overlay() {
         </div>
       </section>}
       {showTasks && (
-        <section className="obs-tasks">
-          <header className="obs-task-header"><span><small>{copy.chatGoals}</small><strong>{copy.taskList}</strong></span><em>{state.tasks.length} {state.tasks.length > 1 ? copy.tasks : copy.task}</em></header>
+        <section className="obs-tasks" aria-label={copy.taskList}>
+          <header className="obs-task-header"><code>!taskhelp</code><span><strong>{state.tasks.length}</strong>/30</span></header>
           <div className="obs-task-scroll" ref={taskListRef}>
             {taskGroups.length ? taskGroups.map((group) => (
               <section className="obs-task-group" key={group.id}>
-                <header><span>{group.username.slice(0, 1).toUpperCase()}</span><strong>{group.username}</strong></header>
-                {group.tasks.map((task, index) => (
-                  <div className={`obs-task-row ${task.completed ? "done" : ""}`} key={task.id}>
-                    <i>{task.completed ? "✓" : ""}</i><small>{index + 1}</small><strong>{task.text}</strong>
-                  </div>
-                ))}
+                <header><strong>{group.username}</strong></header>
+                <ol className="obs-task-items">
+                  {group.tasks.map((task) => (
+                    <li className={`obs-task-row ${task.completed ? "done" : ""}`} key={task.id}>
+                      <span>{task.text}</span>
+                    </li>
+                  ))}
+                </ol>
               </section>
             )) : <p className="obs-task-empty">{copy.empty}</p>}
           </div>
