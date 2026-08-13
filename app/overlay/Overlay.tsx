@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type OverlayState = {
   channel: { id: string; username: string; connected: boolean };
@@ -13,7 +13,7 @@ type OverlayState = {
     phase: "FOCUS" | "BREAK";
     remainingSeconds: number;
   };
-  tasks: Array<{ id: number; username: string; text: string; completed: number | boolean }>;
+  tasks: Array<{ id: number; userId: string; username: string; text: string; completed: number | boolean }>;
 };
 
 const fallback: OverlayState = {
@@ -28,9 +28,20 @@ function formatTime(seconds: number) {
 
 export default function Overlay() {
   const [state, setState] = useState(fallback);
+  const [display, setDisplay] = useState<"timer" | "tasks" | "combined">("combined");
+  const taskListRef = useRef<HTMLDivElement>(null);
   const channelId = typeof window === "undefined"
     ? ""
     : new URLSearchParams(window.location.search).get("channel") ?? "";
+  const showTimer = display !== "tasks";
+  const showTasks = display !== "timer";
+
+  useEffect(() => {
+    const requestedDisplay = new URLSearchParams(window.location.search).get("display");
+    const nextDisplay = requestedDisplay === "timer" || requestedDisplay === "tasks" ? requestedDisplay : "combined";
+    const updateDisplay = window.setTimeout(() => setDisplay(nextDisplay), 0);
+    return () => window.clearTimeout(updateDisplay);
+  }, []);
 
   const refresh = useCallback(async () => {
     if (!channelId) return;
@@ -65,11 +76,57 @@ export default function Overlay() {
   const total = (state.timer.phase === "FOCUS" ? state.timer.focusDuration : state.timer.breakDuration) * 60;
   const progress = state.timer.status === "IDLE" ? 0 : Math.min(100, Math.max(0, (1 - state.timer.remainingSeconds / total) * 100));
   const label = useMemo(() => state.timer.status === "PAUSED" ? "PAUSED" : state.timer.status === "IDLE" ? "READY" : state.timer.status === "FINISHED" ? "FINISHED" : state.timer.phase, [state.timer]);
-  const recentTasks = state.tasks.filter((task) => !task.completed).slice(0, 2);
+  const taskGroups = useMemo(() => {
+    const groups = new Map<string, { username: string; tasks: OverlayState["tasks"] }>();
+    for (const task of state.tasks) {
+      const key = task.userId || task.username;
+      const existing = groups.get(key);
+      if (existing) existing.tasks.push(task);
+      else groups.set(key, { username: task.username, tasks: [task] });
+    }
+    return Array.from(groups.entries()).map(([id, group]) => ({ id, ...group }));
+  }, [state.tasks]);
+  const taskScrollKey = state.tasks.map((task) => `${task.id}:${Number(Boolean(task.completed))}`).join("|");
+
+  useEffect(() => {
+    const viewport = taskListRef.current;
+    if (!viewport || !showTasks || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    viewport.scrollTop = 0;
+    let animationFrame = 0;
+    let direction = 1;
+    let previousTime = performance.now();
+    let pausedUntil = previousTime + 2200;
+    const speed = 8;
+
+    const animate = (time: number) => {
+      const maximumScroll = Math.max(0, viewport.scrollHeight - viewport.clientHeight);
+      const elapsed = Math.min(64, time - previousTime);
+      previousTime = time;
+      if (maximumScroll > 1 && time >= pausedUntil) {
+        const nextPosition = viewport.scrollTop + direction * speed * (elapsed / 1000);
+        if (nextPosition >= maximumScroll) {
+          viewport.scrollTop = maximumScroll;
+          direction = -1;
+          pausedUntil = time + 2200;
+        } else if (nextPosition <= 0) {
+          viewport.scrollTop = 0;
+          direction = 1;
+          pausedUntil = time + 2200;
+        } else {
+          viewport.scrollTop = nextPosition;
+        }
+      }
+      animationFrame = window.requestAnimationFrame(animate);
+    };
+
+    animationFrame = window.requestAnimationFrame(animate);
+    return () => window.cancelAnimationFrame(animationFrame);
+  }, [showTasks, taskScrollKey]);
 
   return (
-    <main className={`obs-canvas phase-${state.timer.phase.toLowerCase()}`}>
-      <section className="obs-widget">
+    <main className={`obs-canvas obs-display-${display} phase-${state.timer.phase.toLowerCase()}`}>
+      {showTimer && <section className="obs-widget">
         <div className="obs-topline">
           <div className="obs-brand"><span>✦</span> FOCUS PARTY</div>
           <div className="obs-live"><i /> @{state.channel.username}</div>
@@ -83,11 +140,22 @@ export default function Overlay() {
           <span>{state.timer.phase === "FOCUS" ? "Prochaine pause" : "Prochain focus"} <strong>{state.timer.phase === "FOCUS" ? state.timer.breakDuration : state.timer.focusDuration} min</strong></span>
           <span>{Math.round(progress)}% complété</span>
         </div>
-      </section>
-      {recentTasks.length > 0 && (
+      </section>}
+      {showTasks && (
         <section className="obs-tasks">
-          <span className="obs-task-title">OBJECTIFS DU CHAT</span>
-          {recentTasks.map((task) => <div key={task.id}><i /> <p><strong>{task.text}</strong><span>@{task.username}</span></p></div>)}
+          <header className="obs-task-header"><span><small>OBJECTIFS DU CHAT</small><strong>TASK LIST</strong></span><em>{state.tasks.length} tâche{state.tasks.length > 1 ? "s" : ""}</em></header>
+          <div className="obs-task-scroll" ref={taskListRef}>
+            {taskGroups.length ? taskGroups.map((group) => (
+              <section className="obs-task-group" key={group.id}>
+                <header><span>{group.username.slice(0, 1).toUpperCase()}</span><strong>{group.username}</strong></header>
+                {group.tasks.map((task, index) => (
+                  <div className={`obs-task-row ${task.completed ? "done" : ""}`} key={task.id}>
+                    <i>{task.completed ? "✓" : ""}</i><small>{index + 1}</small><strong>{task.text}</strong>
+                  </div>
+                ))}
+              </section>
+            )) : <p className="obs-task-empty">Les tâches du chat apparaîtront ici.</p>}
+          </div>
         </section>
       )}
     </main>

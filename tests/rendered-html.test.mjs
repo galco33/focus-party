@@ -36,17 +36,25 @@ test("server-renders the dedicated OBS overlay", async () => {
   assert.match(html, /FOCUS PARTY/);
   assert.match(html, /SESSION/);
   assert.match(html, /READY/);
+  assert.match(html, /TASK LIST/);
 });
 
-test("keeps persistence and starter cleanup explicit", async () => {
-  const [hosting, migration, packageJson] = await Promise.all([
+test("keeps persistence, overlay modes and starter cleanup explicit", async () => {
+  const [hosting, migration, packageJson, dashboardSource, overlaySource] = await Promise.all([
     readFile(new URL("../.openai/hosting.json", import.meta.url), "utf8"),
     readFile(new URL("../drizzle/0000_init_focus_party.sql", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
+    readFile(new URL("../app/Dashboard.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/overlay/Overlay.tsx", import.meta.url), "utf8"),
   ]);
   assert.match(hosting, /"d1":\s*"DB"/);
   assert.match(migration, /CREATE TABLE `pomodoro_sessions`/);
   assert.match(migration, /idx_tasks_channel_user/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
+  assert.match(dashboardSource, /Timer uniquement/);
+  assert.match(dashboardSource, /Task List uniquement/);
+  assert.match(dashboardSource, /Timer \+ Task List/);
+  assert.match(overlaySource, /display !== "tasks"/);
+  assert.match(overlaySource, /display !== "timer"/);
   await assert.rejects(access(new URL("../app/_sites-preview/SkeletonPreview.tsx", import.meta.url)));
 });
