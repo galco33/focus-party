@@ -70,10 +70,31 @@ const commandGroups = [
   { command: "!pomo start", description: "Démarrer la session", access: "Streamer" },
   { command: "!pomo pause", description: "Mettre le timer en pause", access: "Streamer" },
   { command: "!pomo status", description: "Afficher l’état actuel", access: "Tout le monde" },
+  { command: "!task", description: "Afficher sa liste personnelle", access: "Tout le monde" },
   { command: "!task add …", description: "Ajouter une tâche personnelle", access: "Tout le monde" },
   { command: "!task done 1", description: "Terminer sa tâche n°1", access: "Tout le monde" },
+  { command: "!task remove 1", description: "Supprimer sa tâche n°1", access: "Tout le monde" },
   { command: "!task clear", description: "Nettoyer ses tâches terminées", access: "Tout le monde" },
+  { command: "!task clear all", description: "Nettoyer toutes les tâches terminées", access: "Streamer" },
 ];
+
+const taskCommandHints = ["!task", "!task add …", "!task done 1", "!task remove 1", "!task clear"];
+
+function groupTasksByParticipant(tasks: Task[]) {
+  const groups = new Map<string, { userId: string; username: string; tasks: Task[] }>();
+
+  for (const task of tasks) {
+    const key = task.userId || task.username;
+    const existing = groups.get(key);
+    if (existing) {
+      existing.tasks.push(task);
+    } else {
+      groups.set(key, { userId: key, username: task.username, tasks: [task] });
+    }
+  }
+
+  return Array.from(groups.values());
+}
 
 function formatTime(seconds: number) {
   const safe = Math.max(0, seconds);
@@ -115,6 +136,8 @@ export default function Dashboard() {
   const [toast, setToast] = useState("");
   const [copied, setCopied] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const taskListRef = useRef<HTMLDivElement>(null);
+  const taskScrollPausedRef = useRef(false);
 
   const notify = useCallback((message: string) => {
     setToast(message);
@@ -189,6 +212,52 @@ export default function Dashboard() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [state.recentChat]);
 
+  const taskScrollKey = state.tasks
+    .map((task) => `${task.id}:${Number(Boolean(task.completed))}`)
+    .join("|");
+
+  useEffect(() => {
+    const viewport = taskListRef.current;
+    if (!viewport) return;
+
+    viewport.scrollTop = 0;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (reducedMotion.matches) return;
+
+    let animationFrame = 0;
+    let direction = 1;
+    let previousTime = performance.now();
+    let pausedUntil = previousTime + 2200;
+    const speed = 8;
+
+    const animate = (time: number) => {
+      const maximumScroll = Math.max(0, viewport.scrollHeight - viewport.clientHeight);
+      const elapsed = Math.min(64, time - previousTime);
+      previousTime = time;
+
+      if (!taskScrollPausedRef.current && maximumScroll > 1 && time >= pausedUntil) {
+        const nextPosition = viewport.scrollTop + direction * speed * (elapsed / 1000);
+
+        if (nextPosition >= maximumScroll) {
+          viewport.scrollTop = maximumScroll;
+          direction = -1;
+          pausedUntil = time + 2200;
+        } else if (nextPosition <= 0) {
+          viewport.scrollTop = 0;
+          direction = 1;
+          pausedUntil = time + 2200;
+        } else {
+          viewport.scrollTop = nextPosition;
+        }
+      }
+
+      animationFrame = window.requestAnimationFrame(animate);
+    };
+
+    animationFrame = window.requestAnimationFrame(animate);
+    return () => window.cancelAnimationFrame(animationFrame);
+  }, [taskScrollKey]);
+
   const post = useCallback(async (payload: Record<string, unknown>) => {
     setBusy(true);
     try {
@@ -250,6 +319,7 @@ export default function Dashboard() {
     : Math.min(100, Math.max(0, (1 - state.timer.remainingSeconds / totalSeconds) * 100));
   const completedCount = state.tasks.filter((task) => Boolean(task.completed)).length;
   const participantCount = new Set(state.tasks.map((task) => task.userId)).size;
+  const taskGroups = groupTasksByParticipant(state.tasks);
   const overlayUrl = typeof window === "undefined" || !state.channel.id
     ? "Connecte Twitch pour obtenir ton URL OBS"
     : `${window.location.origin}/overlay?channel=${encodeURIComponent(state.channel.id)}`;
@@ -348,8 +418,39 @@ export default function Dashboard() {
               <section className="community-card">
                 <div className="card-heading"><div><span className="section-icon mint"><Icon name="tasks" /></span><div><small>OBJECTIFS DU CHAT</small><h2>Tâches de la communauté</h2></div></div><button onClick={() => setActiveView("commands")}>Voir les commandes →</button></div>
                 <div className="community-stats"><div><strong>{state.tasks.length}</strong><span>Tâches au total</span></div><div><strong>{completedCount}</strong><span>Terminées</span></div><div><strong>{participantCount}</strong><span>Participants</span></div></div>
-                <div className="task-list">
-                  {state.tasks.length ? state.tasks.slice(0, 4).map((task) => <div className={`task-row ${task.completed ? "done" : ""}`} key={task.id}><span className="task-check">{task.completed ? "✓" : ""}</span><span><strong>{task.text}</strong><small>@{task.username}</small></span><em>{task.completed ? "TERMINÉE" : "EN COURS"}</em></div>) : <p className="empty-state">Les tâches ajoutées depuis le chat Twitch apparaîtront ici.</p>}
+                <div className="task-list-header">
+                  <strong>TASK LIST</strong>
+                  <div className="task-command-hints" aria-label="Rappel des commandes de tâches">
+                    {taskCommandHints.map((command) => <code key={command}>{command}</code>)}
+                  </div>
+                </div>
+                <div className="task-list-frame">
+                  <div
+                    className="task-list"
+                    ref={taskListRef}
+                    aria-label="Tâches regroupées par participant"
+                    onMouseEnter={() => { taskScrollPausedRef.current = true; }}
+                    onMouseLeave={() => { taskScrollPausedRef.current = false; }}
+                    onTouchStart={() => { taskScrollPausedRef.current = true; }}
+                    onTouchEnd={() => { taskScrollPausedRef.current = false; }}
+                  >
+                    {taskGroups.length ? taskGroups.map((group) => (
+                      <section className="task-person-group" key={group.userId}>
+                        <header className="task-person-heading">
+                          <span>{group.username.slice(0, 1).toUpperCase()}</span>
+                          <strong>{group.username}</strong>
+                          <small>{group.tasks.length} tâche{group.tasks.length > 1 ? "s" : ""}</small>
+                        </header>
+                        {group.tasks.map((task, index) => (
+                          <div className={`task-row ${task.completed ? "done" : ""}`} key={task.id}>
+                            <span className="task-check">{task.completed ? "✓" : ""}</span>
+                            <span className="task-copy"><small>{index + 1}</small><strong>{task.text}</strong></span>
+                            <em>{task.completed ? "TERMINÉE" : "EN COURS"}</em>
+                          </div>
+                        ))}
+                      </section>
+                    )) : <p className="empty-state">Les tâches ajoutées depuis le chat Twitch apparaîtront ici.</p>}
+                  </div>
                 </div>
               </section>
 
