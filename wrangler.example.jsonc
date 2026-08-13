@@ -20,7 +20,8 @@
     {
       "binding": "DB",
       "database_name": "focus-party-db",
-      "database_id": "VOTRE_DATABASE_ID"
+      "database_id": "VOTRE_DATABASE_ID",
+      "migrations_dir": "drizzle"
     }
   ],
   "durable_objects": {
