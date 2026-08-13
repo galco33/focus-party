@@ -266,6 +266,18 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .chat-line p { margin: 0; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .chat-line p strong { color: var(--violet); font-size: 8px; }
 .chat-line.bot p strong { color: #648118; }
+
+.seo-intro { margin-top: 17px; padding: clamp(22px, 3vw, 34px); border: 1px solid var(--line); border-radius: 15px; background: var(--white); box-shadow: var(--shadow); }
+.seo-intro-heading { max-width: 780px; }
+.seo-intro-heading small { color: var(--violet); font-size: 8px; font-weight: 900; letter-spacing: .16em; }
+.seo-intro-heading h2 { margin: 8px 0 9px; font-size: clamp(20px, 2.4vw, 30px); letter-spacing: -.035em; }
+.seo-intro-heading p, .seo-feature-grid p, .seo-open-source { color: var(--muted); font-size: 10px; line-height: 1.65; }
+.seo-intro-heading p { margin: 0; }
+.seo-feature-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 20px; }
+.seo-feature-grid article { padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); }
+.seo-feature-grid strong { font-size: 11px; }
+.seo-feature-grid p { margin: 6px 0 0; }
+.seo-open-source { margin: 16px 0 0; padding-top: 14px; border-top: 1px solid var(--line); }
 .chat-line p strong em { font-style: normal; color: white; background: var(--violet); border-radius: 4px; padding: 2px 4px; margin-left: 4px; font-size: 6px; }
 .chat-line p span { font-size: 9px; line-height: 1.35; }
 .chat-form { border-top: 1px solid var(--line); padding: 10px 12px; display: grid; grid-template-columns: 70px 1fr 30px; gap: 6px; }
@@ -535,6 +547,7 @@ button:disabled { opacity: .55; cursor: not-allowed; }
   .duration-row { grid-template-columns: 1fr 1fr; }
   .duration-arrow { display: none; }
   .community-stats div { padding: 10px 8px; flex-direction: column; gap: 2px; }
+  .seo-feature-grid { grid-template-columns: 1fr; }
   .task-list-header { align-items: flex-start; flex-direction: column; }
   .task-row { padding-left: 3px; }
   .command-head, .command-row { grid-template-columns: 1fr 1.5fr; }

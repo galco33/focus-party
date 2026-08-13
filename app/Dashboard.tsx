@@ -619,6 +619,17 @@ export default function Dashboard() {
                 </div>
               </section>
             </div>
+            <section className="seo-intro" aria-labelledby="focus-party-seo-title">
+              <div className="seo-intro-heading">
+                <small>{copy.seoEyebrow}</small>
+                <h2 id="focus-party-seo-title">{copy.seoTitle}</h2>
+                <p>{copy.seoIntro}</p>
+              </div>
+              <div className="seo-feature-grid">
+                {copy.seoFeatures.map((feature) => <article key={feature.title}><strong>{feature.title}</strong><p>{feature.description}</p></article>)}
+              </div>
+              <p className="seo-open-source">{copy.seoOpenSource}</p>
+            </section>
           </>
         )}
 

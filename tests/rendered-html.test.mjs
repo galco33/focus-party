@@ -19,6 +19,10 @@ test("server-renders the Focus Party dashboard", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
   const html = await response.text();
   assert.match(html, /<title>Focus Party/);
+  assert.match(html, /Pomodoro Twitch gratuit avec overlay OBS/);
+  assert.match(html, /application\/ld\+json/);
+  assert.match(html, /SoftwareApplication/);
+  assert.match(html, /rel="canonical"/);
   assert.match(html, /FOCUS/);
   assert.match(html, /Dashboard/);
   assert.match(html, /Se connecter à Twitch/);
@@ -39,8 +43,8 @@ test("server-renders the dedicated OBS overlay", async () => {
   assert.match(html, /LISTE DES TÂCHES/);
 });
 
-test("keeps persistence, overlay modes and starter cleanup explicit", async () => {
-  const [hosting, migration, brandingMigration, packageJson, dashboardSource, overlaySource, brandingRoute, i18nSource] = await Promise.all([
+test("keeps persistence, SEO, overlay modes and starter cleanup explicit", async () => {
+  const [hosting, migration, brandingMigration, packageJson, dashboardSource, overlaySource, brandingRoute, i18nSource, layoutSource, robotsSource, sitemapSource] = await Promise.all([
     readFile(new URL("../.openai/hosting.json", import.meta.url), "utf8"),
     readFile(new URL("../drizzle/0000_init_focus_party.sql", import.meta.url), "utf8"),
     readFile(new URL("../drizzle/0002_short_miracleman.sql", import.meta.url), "utf8"),
@@ -49,6 +53,9 @@ test("keeps persistence, overlay modes and starter cleanup explicit", async () =
     readFile(new URL("../app/overlay/Overlay.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/branding/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/i18n.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/robots.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/sitemap.ts", import.meta.url), "utf8"),
   ]);
   assert.match(hosting, /"d1":\s*"DB"/);
   assert.match(hosting, /"r2":\s*null/);
@@ -79,6 +86,12 @@ test("keeps persistence, overlay modes and starter cleanup explicit", async () =
   assert.match(overlaySource, /obs-layout-\$\{timerLayout\}/);
   assert.match(overlaySource, /"accessible"/);
   assert.match(i18nSource, /Daltonisme.*Color-safe.*Daltonismo/s);
+  assert.match(layoutSource, /Pomodoro Twitch gratuit avec overlay OBS/);
+  assert.match(layoutSource, /dashboard streamer gratuit/);
+  assert.match(robotsSource, /sitemap\.xml/);
+  assert.match(robotsSource, /\/api\//);
+  assert.match(sitemapSource, /priority: 1/);
+  assert.match(i18nSource, /Pomodoro Twitch gratuit.*Overlay Twitch et OBS.*Task List communautaire/s);
   assert.match(i18nSource, /LOGO OU PETITE IMAGE/);
   assert.match(i18nSource, /Haut gauche.*Haut droite.*Bas gauche.*Bas droite/s);
   assert.match(overlaySource, /obs-custom-logo/);
