@@ -13,6 +13,10 @@ export function isLanguage(value: string | null): value is Language {
 export const siteCopy = {
   fr: {
     languagePicker: "Choisir la langue",
+    accessibilityTheme: "Thème d’accessibilité visuelle",
+    standardTheme: "Standard",
+    colorblindTheme: "Daltonisme",
+    colorblindThemeDescription: "Palette bleu, jaune et orange adaptée au daltonisme",
     navDashboard: "Dashboard",
     navOverlay: "Overlay OBS",
     navCommands: "Commandes",
@@ -175,7 +179,7 @@ export const siteCopy = {
     logoRemoved: "Logo retiré des sources OBS.",
     logoSaveFailed: "Impossible d’enregistrer le logo.",
     logoRemoveFailed: "Impossible de retirer le logo.",
-    themeNames: { focus: "Focus", graphite: "Graphite", sand: "Sable", ocean: "Océan", plum: "Prune", frost: "Glace" },
+    themeNames: { focus: "Focus", graphite: "Graphite", sand: "Sable", ocean: "Océan", plum: "Prune", frost: "Glace", accessible: "Accessible" },
     timerLayouts: {
       classic: { name: "Classique", description: "Toutes les informations" },
       essential: { name: "Essentiel", description: "Le temps avant tout" },
@@ -191,6 +195,10 @@ export const siteCopy = {
   },
   en: {
     languagePicker: "Choose language",
+    accessibilityTheme: "Visual accessibility theme",
+    standardTheme: "Standard",
+    colorblindTheme: "Color-safe",
+    colorblindThemeDescription: "Blue, yellow and orange palette designed for color-blind accessibility",
     navDashboard: "Dashboard",
     navOverlay: "OBS overlay",
     navCommands: "Commands",
@@ -353,7 +361,7 @@ export const siteCopy = {
     logoRemoved: "Logo removed from the OBS sources.",
     logoSaveFailed: "The logo could not be saved.",
     logoRemoveFailed: "The logo could not be removed.",
-    themeNames: { focus: "Focus", graphite: "Graphite", sand: "Sand", ocean: "Ocean", plum: "Plum", frost: "Frost" },
+    themeNames: { focus: "Focus", graphite: "Graphite", sand: "Sand", ocean: "Ocean", plum: "Plum", frost: "Frost", accessible: "Accessible" },
     timerLayouts: {
       classic: { name: "Classic", description: "All information" },
       essential: { name: "Essential", description: "Time comes first" },
@@ -369,6 +377,10 @@ export const siteCopy = {
   },
   es: {
     languagePicker: "Elegir idioma",
+    accessibilityTheme: "Tema de accesibilidad visual",
+    standardTheme: "Estándar",
+    colorblindTheme: "Daltonismo",
+    colorblindThemeDescription: "Paleta azul, amarilla y naranja adaptada al daltonismo",
     navDashboard: "Panel",
     navOverlay: "Overlay de OBS",
     navCommands: "Comandos",
@@ -531,7 +543,7 @@ export const siteCopy = {
     logoRemoved: "Logo eliminado de las fuentes de OBS.",
     logoSaveFailed: "No se ha podido guardar el logo.",
     logoRemoveFailed: "No se ha podido eliminar el logo.",
-    themeNames: { focus: "Focus", graphite: "Grafito", sand: "Arena", ocean: "Océano", plum: "Ciruela", frost: "Hielo" },
+    themeNames: { focus: "Focus", graphite: "Grafito", sand: "Arena", ocean: "Océano", plum: "Ciruela", frost: "Hielo", accessible: "Accesible" },
     timerLayouts: {
       classic: { name: "Clásico", description: "Toda la información" },
       essential: { name: "Esencial", description: "El tiempo es lo primero" },

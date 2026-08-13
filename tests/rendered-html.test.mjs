@@ -60,12 +60,15 @@ test("keeps persistence, overlay modes and starter cleanup explicit", async () =
   assert.match(i18nSource, /Timer uniquement/);
   assert.match(i18nSource, /Task List uniquement/);
   assert.match(i18nSource, /Timer \+ Task List/);
-  assert.match(i18nSource, /Focus.*Graphite.*Sable.*Océan.*Prune.*Glace/s);
+  assert.match(i18nSource, /Focus.*Graphite.*Sable.*Océan.*Prune.*Glace.*Accessible/s);
   assert.match(dashboardSource, /theme=\$\{overlayTheme\}/);
   assert.match(i18nSource, /Classique.*Essentiel.*Compact.*Centré.*Ligne.*Contour/s);
   assert.match(dashboardSource, /timerStyle=\$\{timerLayout\}/);
   assert.match(dashboardSource, /lang=\$\{language\}/);
   assert.match(dashboardSource, /focus-party-language/);
+  assert.match(dashboardSource, /focus-party-visual-theme/);
+  assert.match(dashboardSource, /dataset\.visualTheme/);
+  assert.match(dashboardSource, /colorblind/);
   assert.match(i18nSource, /Français.*English.*Español/s);
   assert.match(i18nSource, /Choose language.*Elegir idioma/s);
   assert.match(overlaySource, /display !== "tasks"/);
@@ -74,6 +77,8 @@ test("keeps persistence, overlay modes and starter cleanup explicit", async () =
   assert.match(overlaySource, /useState<Language>\("fr"\)/);
   assert.match(overlaySource, /obs-theme-\$\{theme\}/);
   assert.match(overlaySource, /obs-layout-\$\{timerLayout\}/);
+  assert.match(overlaySource, /"accessible"/);
+  assert.match(i18nSource, /Daltonisme.*Color-safe.*Daltonismo/s);
   assert.match(i18nSource, /LOGO OU PETITE IMAGE/);
   assert.match(i18nSource, /Haut gauche.*Haut droite.*Bas gauche.*Bas droite/s);
   assert.match(overlaySource, /obs-custom-logo/);

@@ -51,9 +51,10 @@ type AppState = {
 };
 
 type OverlayMode = "timer" | "tasks" | "combined";
-type OverlayTheme = "focus" | "graphite" | "sand" | "ocean" | "plum" | "frost";
+type OverlayTheme = "focus" | "graphite" | "sand" | "ocean" | "plum" | "frost" | "accessible";
 type TimerLayout = "classic" | "essential" | "compact" | "centered" | "line" | "outline";
 type LogoPosition = "top-left" | "top-right" | "bottom-left" | "bottom-right";
+type VisualTheme = "standard" | "colorblind";
 
 const overlayThemes: Array<{ id: OverlayTheme; colors: [string, string, string] }> = [
   { id: "focus", colors: ["#171421", "#d9f573", "#fffef9"] },
@@ -62,6 +63,7 @@ const overlayThemes: Array<{ id: OverlayTheme; colors: [string, string, string] 
   { id: "ocean", colors: ["#0e232b", "#8fd3c7", "#eff7f6"] },
   { id: "plum", colors: ["#261927", "#d8b4d8", "#f9f3f8"] },
   { id: "frost", colors: ["#eaf0f4", "#547b8f", "#fafcfd"] },
+  { id: "accessible", colors: ["#102a43", "#f0e442", "#56b4e9"] },
 ];
 
 const timerLayouts: TimerLayout[] = ["classic", "essential", "compact", "centered", "line", "outline"];
@@ -157,6 +159,7 @@ export default function Dashboard() {
   const [state, setState] = useState<AppState>(fallbackState);
   const [activeView, setActiveView] = useState("dashboard");
   const [language, setLanguage] = useState<Language>("fr");
+  const [visualTheme, setVisualTheme] = useState<VisualTheme>("standard");
   const [focus, setFocus] = useState(25);
   const [rest, setRest] = useState(5);
   const [sessions, setSessions] = useState(5);
@@ -206,9 +209,11 @@ export default function Dashboard() {
   useEffect(() => {
     const timer = window.setTimeout(() => {
       const stored = window.localStorage.getItem("focus-party-language");
+      const storedVisualTheme = window.localStorage.getItem("focus-party-visual-theme");
       const browserLanguage = window.navigator.language.slice(0, 2);
       const nextLanguage = isLanguage(stored) ? stored : isLanguage(browserLanguage) ? browserLanguage : "fr";
       setLanguage(nextLanguage);
+      setVisualTheme(storedVisualTheme === "colorblind" ? "colorblind" : "standard");
     }, 0);
     return () => window.clearTimeout(timer);
   }, []);
@@ -218,9 +223,18 @@ export default function Dashboard() {
     window.localStorage.setItem("focus-party-language", nextLanguage);
   };
 
+  const changeVisualTheme = (nextTheme: VisualTheme) => {
+    setVisualTheme(nextTheme);
+    window.localStorage.setItem("focus-party-visual-theme", nextTheme);
+  };
+
   useEffect(() => {
     document.documentElement.lang = language;
   }, [language]);
+
+  useEffect(() => {
+    document.documentElement.dataset.visualTheme = visualTheme;
+  }, [visualTheme]);
 
   useEffect(() => {
     const result = new URLSearchParams(window.location.search).get("twitch");
@@ -501,6 +515,13 @@ export default function Dashboard() {
         <header className="topbar">
           <div><p className="eyebrow">{copy.streamArea}</p><h1>{titleByView[activeView][0]}</h1><p>{titleByView[activeView][1]}</p></div>
           <div className="top-actions">
+            <label className="accessibility-picker" title={copy.colorblindThemeDescription}>
+              <span aria-hidden="true">◐</span>
+              <select aria-label={copy.accessibilityTheme} value={visualTheme} onChange={(event) => changeVisualTheme(event.target.value as VisualTheme)}>
+                <option value="standard">{copy.standardTheme}</option>
+                <option value="colorblind">{copy.colorblindTheme}</option>
+              </select>
+            </label>
             <div className="language-switcher" role="group" aria-label={copy.languagePicker}>
               {languageOptions.map((option) => <button key={option.id} className={language === option.id ? "active" : ""} onClick={() => changeLanguage(option.id)} aria-pressed={language === option.id} title={option.label}>{option.short}</button>)}
             </div>

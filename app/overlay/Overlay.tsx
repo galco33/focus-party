@@ -24,8 +24,8 @@ type OverlayState = {
   };
 };
 
-type OverlayTheme = "focus" | "graphite" | "sand" | "ocean" | "plum" | "frost";
-const overlayThemeIds: OverlayTheme[] = ["focus", "graphite", "sand", "ocean", "plum", "frost"];
+type OverlayTheme = "focus" | "graphite" | "sand" | "ocean" | "plum" | "frost" | "accessible";
+const overlayThemeIds: OverlayTheme[] = ["focus", "graphite", "sand", "ocean", "plum", "frost", "accessible"];
 type TimerLayout = "classic" | "essential" | "compact" | "centered" | "line" | "outline";
 const timerLayoutIds: TimerLayout[] = ["classic", "essential", "compact", "centered", "line", "outline"];
 
