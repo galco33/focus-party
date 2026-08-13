@@ -88,6 +88,10 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .topbar h1 { font-size: clamp(25px, 3vw, 38px); line-height: 1.08; letter-spacing: -.045em; margin: 0; }
 .topbar > div:first-child > p:last-child { margin: 8px 0 0; color: var(--muted); font-size: 12px; }
 .top-actions { display: flex; align-items: center; gap: 13px; }
+.language-switcher { height: 36px; display: flex; align-items: center; gap: 3px; padding: 3px; border: 1px solid var(--line); border-radius: 10px; background: var(--white); }
+.language-switcher button { min-width: 30px; height: 28px; padding: 0 6px; border: 0; border-radius: 7px; background: transparent; color: var(--muted); cursor: pointer; font-size: 8px; font-weight: 900; letter-spacing: .06em; transition: background .18s ease, color .18s ease; }
+.language-switcher button:hover { color: var(--ink); background: var(--paper); }
+.language-switcher button.active { color: var(--white); background: var(--ink); }
 .live-indicator { height: 36px; display: flex; align-items: center; gap: 8px; padding: 0 13px; border: 1px solid var(--line); border-radius: 10px; background: var(--white); font-weight: 900; font-size: 9px; letter-spacing: .08em; }
 .live-indicator i, .connected i, .viewer-count i { width: 7px; height: 7px; border-radius: 50%; background: #38c777; box-shadow: 0 0 0 4px rgba(56,199,119,.13); }
 .notification { border: 1px solid var(--line); background: var(--white); width: 36px; height: 36px; border-radius: 10px; position: relative; cursor: pointer; }
@@ -481,6 +485,8 @@ button:disabled { opacity: .55; cursor: not-allowed; }
   .topbar { align-items: flex-start; }
   .topbar h1 { font-size: 25px; }
   .top-actions { margin-top: 4px; }
+  .language-switcher { height: 32px; }
+  .language-switcher button { min-width: 27px; height: 24px; padding: 0 4px; }
   .live-indicator { display: none; }
   .twitch-strip { flex-wrap: wrap; }
   .twitch-strip p { display: none; }

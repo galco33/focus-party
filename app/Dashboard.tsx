@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { isLanguage, languageOptions, siteCopy, type Language } from "@/app/i18n";
 
 type Timer = {
   currentSession: number;
@@ -54,30 +55,18 @@ type OverlayTheme = "focus" | "graphite" | "sand" | "ocean" | "plum" | "frost";
 type TimerLayout = "classic" | "essential" | "compact" | "centered" | "line" | "outline";
 type LogoPosition = "top-left" | "top-right" | "bottom-left" | "bottom-right";
 
-const overlayThemes: Array<{ id: OverlayTheme; name: string; colors: [string, string, string] }> = [
-  { id: "focus", name: "Focus", colors: ["#171421", "#d9f573", "#fffef9"] },
-  { id: "graphite", name: "Graphite", colors: ["#18191b", "#e5e7eb", "#f5f5f4"] },
-  { id: "sand", name: "Sable", colors: ["#2e2720", "#e7c99c", "#f9f5ee"] },
-  { id: "ocean", name: "Océan", colors: ["#0e232b", "#8fd3c7", "#eff7f6"] },
-  { id: "plum", name: "Prune", colors: ["#261927", "#d8b4d8", "#f9f3f8"] },
-  { id: "frost", name: "Glace", colors: ["#eaf0f4", "#547b8f", "#fafcfd"] },
+const overlayThemes: Array<{ id: OverlayTheme; colors: [string, string, string] }> = [
+  { id: "focus", colors: ["#171421", "#d9f573", "#fffef9"] },
+  { id: "graphite", colors: ["#18191b", "#e5e7eb", "#f5f5f4"] },
+  { id: "sand", colors: ["#2e2720", "#e7c99c", "#f9f5ee"] },
+  { id: "ocean", colors: ["#0e232b", "#8fd3c7", "#eff7f6"] },
+  { id: "plum", colors: ["#261927", "#d8b4d8", "#f9f3f8"] },
+  { id: "frost", colors: ["#eaf0f4", "#547b8f", "#fafcfd"] },
 ];
 
-const timerLayouts: Array<{ id: TimerLayout; name: string; description: string }> = [
-  { id: "classic", name: "Classique", description: "Toutes les informations" },
-  { id: "essential", name: "Essentiel", description: "Le temps avant tout" },
-  { id: "compact", name: "Compact", description: "Moins de hauteur" },
-  { id: "centered", name: "Centré", description: "Composition symétrique" },
-  { id: "line", name: "Ligne", description: "Format horizontal" },
-  { id: "outline", name: "Contour", description: "Cadre fin et discret" },
-];
+const timerLayouts: TimerLayout[] = ["classic", "essential", "compact", "centered", "line", "outline"];
 
-const logoPositionOptions: Array<{ id: LogoPosition; label: string }> = [
-  { id: "top-left", label: "Haut gauche" },
-  { id: "top-right", label: "Haut droite" },
-  { id: "bottom-left", label: "Bas gauche" },
-  { id: "bottom-right", label: "Bas droite" },
-];
+const logoPositionOptions: LogoPosition[] = ["top-left", "top-right", "bottom-left", "bottom-right"];
 
 const fallbackState: AppState = {
   channel: {
@@ -103,17 +92,17 @@ const fallbackState: AppState = {
 };
 
 const commandGroups = [
-  { command: "!pomo 5", description: "Définir le nombre de sessions", access: "Streamer" },
-  { command: "!timer 25/5", description: "Régler les durées focus / pause", access: "Streamer" },
-  { command: "!pomo start", description: "Démarrer la session", access: "Streamer" },
-  { command: "!pomo pause", description: "Mettre le timer en pause", access: "Streamer" },
-  { command: "!pomo status", description: "Afficher l’état actuel", access: "Tout le monde" },
-  { command: "!task", description: "Afficher sa liste personnelle", access: "Tout le monde" },
-  { command: "!task add …", description: "Ajouter une tâche personnelle", access: "Tout le monde" },
-  { command: "!task done 1", description: "Terminer sa tâche n°1", access: "Tout le monde" },
-  { command: "!task remove 1", description: "Supprimer sa tâche n°1", access: "Tout le monde" },
-  { command: "!task clear", description: "Nettoyer ses tâches terminées", access: "Tout le monde" },
-  { command: "!task clear all", description: "Nettoyer toutes les tâches terminées", access: "Streamer" },
+  { command: "!pomo 5", access: "streamer" },
+  { command: "!timer 25/5", access: "streamer" },
+  { command: "!pomo start", access: "streamer" },
+  { command: "!pomo pause", access: "streamer" },
+  { command: "!pomo status", access: "everyone" },
+  { command: "!task", access: "everyone" },
+  { command: "!task add …", access: "everyone" },
+  { command: "!task done 1", access: "everyone" },
+  { command: "!task remove 1", access: "everyone" },
+  { command: "!task clear", access: "everyone" },
+  { command: "!task clear all", access: "streamer" },
 ];
 
 const taskCommandHints = ["!task", "!task add …", "!task done 1", "!task remove 1", "!task clear"];
@@ -153,20 +142,21 @@ function Icon({ name }: { name: string }) {
   return <span className="icon" aria-hidden="true">{icons[name] ?? "•"}</span>;
 }
 
-function StatusPill({ timer }: { timer: Timer }) {
+function StatusPill({ timer, copy }: { timer: Timer; copy: (typeof siteCopy)[Language] }) {
   const label = timer.status === "IDLE"
-    ? "PRÊT"
+    ? copy.statusReady
     : timer.status === "FINISHED"
-      ? "TERMINÉ"
+      ? copy.statusFinished
       : timer.status === "PAUSED"
-        ? "PAUSE"
-        : timer.phase;
-  return <span className={`status-pill status-${label.toLowerCase()}`}><i />{label}</span>;
+        ? copy.statusPaused
+        : timer.phase === "FOCUS" ? copy.focus.toUpperCase() : copy.break.toUpperCase();
+  return <span className={`status-pill status-${timer.status.toLowerCase()}`}><i />{label}</span>;
 }
 
 export default function Dashboard() {
   const [state, setState] = useState<AppState>(fallbackState);
   const [activeView, setActiveView] = useState("dashboard");
+  const [language, setLanguage] = useState<Language>("fr");
   const [focus, setFocus] = useState(25);
   const [rest, setRest] = useState(5);
   const [sessions, setSessions] = useState(5);
@@ -185,6 +175,7 @@ export default function Dashboard() {
   const taskScrollPausedRef = useRef(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const brandingRevisionRef = useRef<string | null | undefined>(undefined);
+  const copy = siteCopy[language];
 
   const notify = useCallback((message: string) => {
     setToast(message);
@@ -213,20 +204,39 @@ export default function Dashboard() {
   }, [applyState]);
 
   useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const stored = window.localStorage.getItem("focus-party-language");
+      const browserLanguage = window.navigator.language.slice(0, 2);
+      const nextLanguage = isLanguage(stored) ? stored : isLanguage(browserLanguage) ? browserLanguage : "fr";
+      setLanguage(nextLanguage);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  const changeLanguage = (nextLanguage: Language) => {
+    setLanguage(nextLanguage);
+    window.localStorage.setItem("focus-party-language", nextLanguage);
+  };
+
+  useEffect(() => {
+    document.documentElement.lang = language;
+  }, [language]);
+
+  useEffect(() => {
     const result = new URLSearchParams(window.location.search).get("twitch");
     const notification = result === "connected"
-      ? "Ta chaîne Twitch est connectée. L’écoute du chat démarre."
+      ? copy.authConnected
       : result === "warning"
-        ? "Twitch est connecté, mais l’écoute du chat doit être relancée."
+        ? copy.authWarning
         : result === "error"
-          ? "La connexion Twitch n’a pas abouti. Réessaie."
+          ? copy.authError
           : "";
     const timer = notification ? window.setTimeout(() => notify(notification), 0) : null;
     if (result) window.history.replaceState({}, "", window.location.pathname);
     return () => {
       if (timer) window.clearTimeout(timer);
     };
-  }, [notify]);
+  }, [copy.authConnected, copy.authError, copy.authWarning, notify]);
 
   useEffect(() => {
     const initialRefresh = window.setTimeout(refresh, 0);
@@ -323,35 +333,37 @@ export default function Dashboard() {
         body: JSON.stringify(payload),
       });
       const result = await response.json() as { state?: AppState; reply?: string; error?: string };
-      if (!response.ok || !result.state) throw new Error(result.error ?? "Impossible d’enregistrer la modification.");
+      if (!response.ok || !result.state) throw new Error(result.error ?? copy.genericError);
       applyState(result.state);
       const localChannel = new BroadcastChannel("focus-party-updates");
       localChannel.postMessage("refresh");
       localChannel.close();
-      return result.reply ?? "Mise à jour enregistrée.";
+      return result.reply ?? copy.updateSaved;
     } finally {
       setBusy(false);
     }
-  }, [applyState]);
+  }, [applyState, copy.genericError, copy.updateSaved]);
 
   const controlTimer = async (action: string) => {
     try {
-      notify(await post({ action }));
+      await post({ action });
+      notify(copy.updateSaved);
     } catch (error) {
-      notify(error instanceof Error ? error.message : "Une erreur est survenue.");
+      notify(error instanceof Error ? error.message : copy.genericError);
     }
   };
 
   const saveSettings = async () => {
     try {
-      notify(await post({
+      await post({
         action: "configure",
         focusDuration: focus,
         breakDuration: rest,
         totalSessions: sessions,
-      }));
+      });
+      notify(copy.configSaved);
     } catch (error) {
-      notify(error instanceof Error ? error.message : "Une erreur est survenue.");
+      notify(error instanceof Error ? error.message : copy.genericError);
     }
   };
 
@@ -359,11 +371,11 @@ export default function Dashboard() {
     setBusy(true);
     try {
       const response = await fetch("/api/auth/twitch/disconnect", { method: "POST" });
-      if (!response.ok) throw new Error("La déconnexion n’a pas abouti.");
+      if (!response.ok) throw new Error(copy.disconnectFailed);
       applyState(fallbackState);
-      notify("La chaîne Twitch est déconnectée.");
+      notify(copy.twitchDisconnected);
     } catch (error) {
-      notify(error instanceof Error ? error.message : "Une erreur est survenue.");
+      notify(error instanceof Error ? error.message : copy.genericError);
     } finally {
       setBusy(false);
     }
@@ -373,18 +385,18 @@ export default function Dashboard() {
     if (!file) return;
     if (file.type !== "image/png") {
       if (logoInputRef.current) logoInputRef.current.value = "";
-      return notify("Choisis une image au format PNG.");
+      return notify(copy.pngOnly);
     }
     if (file.size > 512 * 1024) {
       if (logoInputRef.current) logoInputRef.current.value = "";
-      return notify("Le PNG ne doit pas dépasser 500 Ko.");
+      return notify(copy.pngTooLarge);
     }
     setLogoFile(file);
     setLogoPreviewUrl(URL.createObjectURL(file));
   };
 
   const saveLogo = async () => {
-    if (!state.channel.connected) return notify("Connecte d’abord ta chaîne Twitch.");
+    if (!state.channel.connected) return notify(copy.connectFirst);
     setBusy(true);
     try {
       const form = new FormData();
@@ -393,14 +405,14 @@ export default function Dashboard() {
       if (logoFile) form.set("logo", logoFile);
       const response = await fetch("/api/branding", { method: "POST", body: form });
       const result = await response.json() as { branding?: AppState["branding"]; error?: string };
-      if (!response.ok || !result.branding) throw new Error(result.error ?? "Impossible d’enregistrer le logo.");
+      if (!response.ok || !result.branding) throw new Error(result.error ?? copy.logoSaveFailed);
       setState((current) => ({ ...current, branding: result.branding! }));
       setLogoFile(null);
       setLogoPreviewUrl("");
       if (logoInputRef.current) logoInputRef.current.value = "";
-      notify("Logo enregistré dans les sources OBS.");
+      notify(copy.logoSaved);
     } catch (error) {
-      notify(error instanceof Error ? error.message : "Une erreur est survenue.");
+      notify(error instanceof Error ? error.message : copy.genericError);
     } finally {
       setBusy(false);
     }
@@ -411,14 +423,14 @@ export default function Dashboard() {
     try {
       const response = await fetch("/api/branding", { method: "DELETE" });
       const result = await response.json() as { branding?: AppState["branding"]; error?: string };
-      if (!response.ok || !result.branding) throw new Error(result.error ?? "Impossible de retirer le logo.");
+      if (!response.ok || !result.branding) throw new Error(result.error ?? copy.logoRemoveFailed);
       setState((current) => ({ ...current, branding: result.branding! }));
       setLogoFile(null);
       setLogoPreviewUrl("");
       if (logoInputRef.current) logoInputRef.current.value = "";
-      notify("Logo retiré des sources OBS.");
+      notify(copy.logoRemoved);
     } catch (error) {
-      notify(error instanceof Error ? error.message : "Une erreur est survenue.");
+      notify(error instanceof Error ? error.message : copy.genericError);
     } finally {
       setBusy(false);
     }
@@ -435,9 +447,9 @@ export default function Dashboard() {
     ? ""
     : `${window.location.origin}/overlay?channel=${encodeURIComponent(state.channel.id)}`;
   const overlaySources: Array<{ mode: OverlayMode; title: string; description: string; size: string; url: string }> = [
-    { mode: "timer", title: "Timer uniquement", description: "Le Pomodoro sans la liste des tâches.", size: "900 × 300 px", url: overlayBaseUrl ? `${overlayBaseUrl}&display=timer&theme=${overlayTheme}&timerStyle=${timerLayout}` : "Connecte Twitch pour obtenir ce lien" },
-    { mode: "tasks", title: "Task List uniquement", description: "Les tâches regroupées par participant.", size: "650 × 700 px", url: overlayBaseUrl ? `${overlayBaseUrl}&display=tasks&theme=${overlayTheme}` : "Connecte Twitch pour obtenir ce lien" },
-    { mode: "combined", title: "Timer + Task List", description: "Le timer et les tâches dans une seule source.", size: "900 × 600 px", url: overlayBaseUrl ? `${overlayBaseUrl}&display=combined&theme=${overlayTheme}&timerStyle=${timerLayout}` : "Connecte Twitch pour obtenir ce lien" },
+    { mode: "timer", title: copy.timerOnly, description: copy.timerOnlyDescription, size: "900 × 300 px", url: overlayBaseUrl ? `${overlayBaseUrl}&display=timer&theme=${overlayTheme}&timerStyle=${timerLayout}&lang=${language}` : copy.connectForLink },
+    { mode: "tasks", title: copy.tasksOnly, description: copy.tasksOnlyDescription, size: "650 × 700 px", url: overlayBaseUrl ? `${overlayBaseUrl}&display=tasks&theme=${overlayTheme}&lang=${language}` : copy.connectForLink },
+    { mode: "combined", title: copy.combined, description: copy.combinedDescription, size: "900 × 600 px", url: overlayBaseUrl ? `${overlayBaseUrl}&display=combined&theme=${overlayTheme}&timerStyle=${timerLayout}&lang=${language}` : copy.connectForLink },
   ];
   const selectedOverlay = overlaySources.find((source) => source.mode === previewOverlay) ?? overlaySources[2];
   const savedLogoUrl = state.channel.id && state.branding.hasLogo
@@ -446,7 +458,7 @@ export default function Dashboard() {
   const displayedLogoUrl = logoPreviewUrl || savedLogoUrl;
 
   const copyOverlay = async (source: (typeof overlaySources)[number]) => {
-    if (!state.channel.id) return notify("Connecte d’abord ta chaîne Twitch.");
+    if (!state.channel.id) return notify(copy.connectFirst);
     await navigator.clipboard.writeText(source.url);
     setCopiedOverlay(source.mode);
     window.setTimeout(() => setCopiedOverlay(null), 1800);
@@ -454,42 +466,45 @@ export default function Dashboard() {
 
   const streamerName = state.channel.displayName || "streamer";
   const titleByView: Record<string, [string, string]> = {
-    dashboard: [state.channel.connected ? `Bonsoir, ${streamerName} 👋` : "Bienvenue sur Focus Party", state.channel.connected ? "Ta chaîne est prête pour une session de focus." : "Connecte ta chaîne pour transformer ton chat en télécommande."],
-    overlay: ["Overlay OBS", "Une source navigateur transparente, toujours synchronisée."],
-    commands: ["Commandes du chat", "Tout ce que ta communauté peut piloter sans quitter Twitch."],
-    settings: ["Paramètres", "Règle ta session et les droits de modération."],
+    dashboard: [state.channel.connected ? copy.greeting.replace("{name}", streamerName) : copy.welcome, state.channel.connected ? copy.readySubtitle : copy.welcomeSubtitle],
+    overlay: [copy.overlayPageTitle, copy.overlayPageSubtitle],
+    commands: [copy.commandsPageTitle, copy.commandsPageSubtitle],
+    settings: [copy.settingsPageTitle, copy.settingsPageSubtitle],
   };
 
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <button className="brand" onClick={() => setActiveView("dashboard")} aria-label="Focus Party — accueil">
+        <button className="brand" onClick={() => setActiveView("dashboard")} aria-label="Focus Party">
           <span className="brand-mark">✦</span>
           <span>FOCUS<span>PARTY</span></span>
         </button>
-        <nav className="main-nav" aria-label="Navigation principale">
-          {[["dashboard", "Dashboard"], ["overlay", "Overlay OBS"], ["commands", "Commandes"], ["settings", "Paramètres"]].map(([key, label]) => (
+        <nav className="main-nav" aria-label="Navigation">
+          {[["dashboard", copy.navDashboard], ["overlay", copy.navOverlay], ["commands", copy.navCommands], ["settings", copy.navSettings]].map(([key, label]) => (
             <button key={key} className={activeView === key ? "active" : ""} onClick={() => setActiveView(key)}>
-              <Icon name={key} /> <span>{label}</span>{key === "overlay" && state.channel.connected && <em>LIVE</em>}
+              <Icon name={key} /> <span>{label}</span>{key === "overlay" && state.channel.connected && <em>{copy.live}</em>}
             </button>
           ))}
         </nav>
         <div className="sidebar-tip">
           <span className="tip-icon">⌘</span>
-          <strong>{state.channel.chatConnected ? "Le chat est prêt" : "Connexion Twitch"}</strong>
-          <p>{state.channel.chatConnected ? "Les commandes sont écoutées en temps réel." : "Connecte ta chaîne pour activer les commandes."}</p>
+          <strong>{state.channel.chatConnected ? copy.chatReady : copy.twitchConnection}</strong>
+          <p>{state.channel.chatConnected ? copy.commandsRealtime : copy.connectToActivate}</p>
         </div>
         <div className="profile-card">
           <span className="avatar">{streamerName.slice(0, 1).toUpperCase()}</span>
-          <span><strong>{streamerName}</strong><small>{state.channel.username ? `@${state.channel.username}` : "Non connecté"}</small></span>
+          <span><strong>{streamerName}</strong><small>{state.channel.username ? `@${state.channel.username}` : copy.notConnected}</small></span>
         </div>
       </aside>
 
       <main className="main-content">
         <header className="topbar">
-          <div><p className="eyebrow">ESPACE STREAMER</p><h1>{titleByView[activeView][0]}</h1><p>{titleByView[activeView][1]}</p></div>
+          <div><p className="eyebrow">{copy.streamArea}</p><h1>{titleByView[activeView][0]}</h1><p>{titleByView[activeView][1]}</p></div>
           <div className="top-actions">
-            {state.channel.chatConnected && <div className="live-indicator"><i /> CHAT EN DIRECT</div>}
+            <div className="language-switcher" role="group" aria-label={copy.languagePicker}>
+              {languageOptions.map((option) => <button key={option.id} className={language === option.id ? "active" : ""} onClick={() => changeLanguage(option.id)} aria-pressed={language === option.id} title={option.label}>{option.short}</button>)}
+            </div>
+            {state.channel.chatConnected && <div className="live-indicator"><i /> {copy.chatLive}</div>}
           </div>
         </header>
 
@@ -499,49 +514,49 @@ export default function Dashboard() {
               <div className="twitch-logo">◖◗</div>
               {state.channel.connected ? (
                 <>
-                  <div><small>CHAÎNE CONNECTÉE</small><strong>@{state.channel.username}</strong></div>
-                  <span className={state.channel.chatConnected ? "connected" : "pending"}><i /> {state.channel.chatConnected ? "Chat actif" : "Activation du chat…"}</span>
-                  <p>{state.channel.chatConnected ? "Les commandes du vrai chat Twitch sont écoutées" : "Twitch vérifie actuellement l’adresse de réception"}</p>
-                  <button onClick={disconnect} disabled={busy}>Déconnecter <span>→</span></button>
+                  <div><small>{copy.channelConnected}</small><strong>@{state.channel.username}</strong></div>
+                  <span className={state.channel.chatConnected ? "connected" : "pending"}><i /> {state.channel.chatConnected ? copy.chatActive : copy.chatActivating}</span>
+                  <p>{state.channel.chatConnected ? copy.realChatListening : copy.twitchChecking}</p>
+                  <button onClick={disconnect} disabled={busy}>{copy.disconnect} <span>→</span></button>
                 </>
               ) : (
                 <>
-                  <div><small>AUCUNE CHAÎNE CONNECTÉE</small><strong>Connecte ton compte Twitch</strong></div>
-                  <p>Focus Party demandera uniquement les droits nécessaires au chat.</p>
-                  <a className="twitch-connect" href="/api/auth/twitch/start">Se connecter à Twitch <span>→</span></a>
+                  <div><small>{copy.noChannelConnected}</small><strong>{copy.connectAccount}</strong></div>
+                  <p>{copy.twitchRights}</p>
+                  <a className="twitch-connect" href="/api/auth/twitch/start">{copy.connectTwitch} <span>→</span></a>
                 </>
               )}
             </section>
 
             <div className="dashboard-grid">
               <section className="timer-card">
-                <div className="card-heading inverted"><div><span className="section-icon"><Icon name="timer" /></span><div><small>POMODORO EN COURS</small><h2>Session de focus</h2></div></div><StatusPill timer={state.timer} /></div>
-                <div className="timer-center"><span className="session-label">SESSION {state.timer.currentSession} <i>/</i> {state.timer.totalSessions}</span><strong className="big-time">{formatTime(state.timer.remainingSeconds)}</strong><span className="phase-label">{state.timer.status === "PAUSED" ? "EN PAUSE" : state.timer.phase === "BREAK" ? "RESPIRATION" : "TEMPS DE FOCUS"}</span></div>
-                <div className="progress-wrap"><div className="progress-meta"><span>Progression</span><strong>{Math.round(progress)}%</strong></div><div className="progress-track"><i style={{ width: `${progress}%` }} /></div><p>{state.timer.phase === "FOCUS" ? `Prochaine pause : ${state.timer.breakDuration} min` : `Prochain focus : ${state.timer.focusDuration} min`} <span>•</span> Fin prévue après {state.timer.totalSessions - state.timer.currentSession + 1} session{state.timer.totalSessions - state.timer.currentSession + 1 > 1 ? "s" : ""}</p></div>
+                <div className="card-heading inverted"><div><span className="section-icon"><Icon name="timer" /></span><div><small>{copy.currentPomodoro}</small><h2>{copy.focusSession}</h2></div></div><StatusPill timer={state.timer} copy={copy} /></div>
+                <div className="timer-center"><span className="session-label">{copy.session} {state.timer.currentSession} <i>/</i> {state.timer.totalSessions}</span><strong className="big-time">{formatTime(state.timer.remainingSeconds)}</strong><span className="phase-label">{state.timer.status === "PAUSED" ? copy.pausedLong : state.timer.phase === "BREAK" ? copy.breathing : copy.focusTime}</span></div>
+                <div className="progress-wrap"><div className="progress-meta"><span>{copy.progress}</span><strong>{Math.round(progress)}%</strong></div><div className="progress-track"><i style={{ width: `${progress}%` }} /></div><p>{state.timer.phase === "FOCUS" ? `${copy.nextBreak} : ${state.timer.breakDuration} min` : `${copy.nextFocus} : ${state.timer.focusDuration} min`} <span>•</span> {copy.expectedEnd} {state.timer.totalSessions - state.timer.currentSession + 1} {state.timer.totalSessions - state.timer.currentSession + 1 > 1 ? copy.sessionsWord : copy.sessionWord}</p></div>
                 <div className="timer-controls">
-                  {state.timer.status === "RUNNING" ? <button className="primary-control" onClick={() => controlTimer("pause")} disabled={busy || !state.channel.connected}><span>Ⅱ</span> Mettre en pause</button> : state.timer.status === "PAUSED" ? <button className="primary-control" onClick={() => controlTimer("resume")} disabled={busy || !state.channel.connected}><span>▶</span> Reprendre</button> : <button className="primary-control" onClick={() => controlTimer("start")} disabled={busy || !state.channel.connected}><span>▶</span> Démarrer le focus</button>}
-                  <button className="icon-control" aria-label="Arrêter et réinitialiser" onClick={() => controlTimer("stop")} disabled={busy || !state.channel.connected}>■</button>
+                  {state.timer.status === "RUNNING" ? <button className="primary-control" onClick={() => controlTimer("pause")} disabled={busy || !state.channel.connected}><span>Ⅱ</span> {copy.pauseTimer}</button> : state.timer.status === "PAUSED" ? <button className="primary-control" onClick={() => controlTimer("resume")} disabled={busy || !state.channel.connected}><span>▶</span> {copy.resumeTimer}</button> : <button className="primary-control" onClick={() => controlTimer("start")} disabled={busy || !state.channel.connected}><span>▶</span> {copy.startFocus}</button>}
+                  <button className="icon-control" aria-label={copy.stopReset} onClick={() => controlTimer("stop")} disabled={busy || !state.channel.connected}>■</button>
                 </div>
               </section>
 
               <section className="config-card">
-                <div className="card-heading"><div><span className="section-icon pale"><Icon name="settings" /></span><div><small>VOTRE RYTHME</small><h2>Configuration</h2></div></div><span className="saved-dot">Sauvegarde serveur</span></div>
-                <div className="duration-row"><label><span>Focus</span><strong><input aria-label="Durée du focus" type="number" min="1" max="120" value={focus} onChange={(event) => setFocus(Number(event.target.value))} /> min</strong></label><span className="duration-arrow">→</span><label><span>Pause</span><strong><input aria-label="Durée de la pause" type="number" min="1" max="60" value={rest} onChange={(event) => setRest(Number(event.target.value))} /> min</strong></label></div>
-                <div className="session-control"><span>Nombre de sessions</span><div><button onClick={() => setSessions(Math.max(1, sessions - 1))} aria-label="Retirer une session">−</button><strong>{sessions}</strong><button onClick={() => setSessions(Math.min(20, sessions + 1))} aria-label="Ajouter une session">＋</button></div></div>
-                <div className="timeline" aria-label={`${sessions} sessions configurées`}>{Array.from({ length: Math.min(sessions, 8) }, (_, index) => <i key={index} className={index === 0 ? "active" : ""} />)}</div>
-                <div className="config-summary"><span>Durée totale estimée</span><strong>{Math.floor((focus * sessions + rest * Math.max(0, sessions - 1)) / 60)}h {(focus * sessions + rest * Math.max(0, sessions - 1)) % 60}min</strong></div>
-                <button className="save-button" onClick={saveSettings} disabled={busy || !state.channel.connected}>Enregistrer la configuration <span>→</span></button>
-                <p className="chat-hint"><Icon name="chat" /> Depuis ton chat : <code>!timer {focus}/{rest}</code></p>
+                <div className="card-heading"><div><span className="section-icon pale"><Icon name="settings" /></span><div><small>{copy.yourRhythm}</small><h2>{copy.configuration}</h2></div></div><span className="saved-dot">{copy.serverSave}</span></div>
+                <div className="duration-row"><label><span>{copy.focus}</span><strong><input aria-label={copy.focusDuration} type="number" min="1" max="120" value={focus} onChange={(event) => setFocus(Number(event.target.value))} /> min</strong></label><span className="duration-arrow">→</span><label><span>{copy.break}</span><strong><input aria-label={copy.breakDuration} type="number" min="1" max="60" value={rest} onChange={(event) => setRest(Number(event.target.value))} /> min</strong></label></div>
+                <div className="session-control"><span>{copy.sessionsCount}</span><div><button onClick={() => setSessions(Math.max(1, sessions - 1))} aria-label={copy.removeSession}>−</button><strong>{sessions}</strong><button onClick={() => setSessions(Math.min(20, sessions + 1))} aria-label={copy.addSession}>＋</button></div></div>
+                <div className="timeline" aria-label={copy.sessionsConfigured.replace("{count}", String(sessions))}>{Array.from({ length: Math.min(sessions, 8) }, (_, index) => <i key={index} className={index === 0 ? "active" : ""} />)}</div>
+                <div className="config-summary"><span>{copy.estimatedDuration}</span><strong>{Math.floor((focus * sessions + rest * Math.max(0, sessions - 1)) / 60)}h {(focus * sessions + rest * Math.max(0, sessions - 1)) % 60}min</strong></div>
+                <button className="save-button" onClick={saveSettings} disabled={busy || !state.channel.connected}>{copy.saveConfiguration} <span>→</span></button>
+                <p className="chat-hint"><Icon name="chat" /> {copy.fromChat} : <code>!timer {focus}/{rest}</code></p>
               </section>
             </div>
 
             <div className="lower-grid">
               <section className="community-card">
-                <div className="card-heading"><div><span className="section-icon mint"><Icon name="tasks" /></span><div><small>OBJECTIFS DU CHAT</small><h2>Tâches de la communauté</h2></div></div><button onClick={() => setActiveView("commands")}>Voir les commandes →</button></div>
-                <div className="community-stats"><div><strong>{state.tasks.length}</strong><span>Tâches au total</span></div><div><strong>{completedCount}</strong><span>Terminées</span></div><div><strong>{participantCount}</strong><span>Participants</span></div></div>
+                <div className="card-heading"><div><span className="section-icon mint"><Icon name="tasks" /></span><div><small>{copy.chatGoals}</small><h2>{copy.communityTasks}</h2></div></div><button onClick={() => setActiveView("commands")}>{copy.viewCommands} →</button></div>
+                <div className="community-stats"><div><strong>{state.tasks.length}</strong><span>{copy.totalTasks}</span></div><div><strong>{completedCount}</strong><span>{copy.completedPlural}</span></div><div><strong>{participantCount}</strong><span>{copy.participants}</span></div></div>
                 <div className="task-list-header">
-                  <strong>TASK LIST</strong>
-                  <div className="task-command-hints" aria-label="Rappel des commandes de tâches">
+                  <strong>{copy.taskList}</strong>
+                  <div className="task-command-hints" aria-label={copy.taskHints}>
                     {taskCommandHints.map((command) => <code key={command}>{command}</code>)}
                   </div>
                 </div>
@@ -549,7 +564,7 @@ export default function Dashboard() {
                   <div
                     className="task-list"
                     ref={taskListRef}
-                    aria-label="Tâches regroupées par participant"
+                    aria-label={copy.groupedTasks}
                     onMouseEnter={() => { taskScrollPausedRef.current = true; }}
                     onMouseLeave={() => { taskScrollPausedRef.current = false; }}
                     onTouchStart={() => { taskScrollPausedRef.current = true; }}
@@ -560,25 +575,25 @@ export default function Dashboard() {
                         <header className="task-person-heading">
                           <span>{group.username.slice(0, 1).toUpperCase()}</span>
                           <strong>{group.username}</strong>
-                          <small>{group.tasks.length} tâche{group.tasks.length > 1 ? "s" : ""}</small>
+                          <small>{group.tasks.length} {group.tasks.length > 1 ? copy.tasks : copy.task}</small>
                         </header>
                         {group.tasks.map((task, index) => (
                           <div className={`task-row ${task.completed ? "done" : ""}`} key={task.id}>
                             <span className="task-check">{task.completed ? "✓" : ""}</span>
                             <span className="task-copy"><small>{index + 1}</small><strong>{task.text}</strong></span>
-                            <em>{task.completed ? "TERMINÉE" : "EN COURS"}</em>
+                            <em>{task.completed ? copy.completedStatus : copy.inProgress}</em>
                           </div>
                         ))}
                       </section>
-                    )) : <p className="empty-state">Les tâches ajoutées depuis le chat Twitch apparaîtront ici.</p>}
+                    )) : <p className="empty-state">{copy.emptyTasks}</p>}
                   </div>
                 </div>
               </section>
 
               <section className="chat-card">
-                <div className="card-heading chat-heading"><div><span className="section-icon violet"><Icon name="chat" /></span><div><small>ACTIVITÉ RÉELLE</small><h2>Commandes Twitch</h2></div></div><span className="viewer-count"><i /> EN DIRECT</span></div>
+                <div className="card-heading chat-heading"><div><span className="section-icon violet"><Icon name="chat" /></span><div><small>{copy.realActivity}</small><h2>{copy.twitchCommands}</h2></div></div><span className="viewer-count"><i /> {copy.live}</span></div>
                 <div className="chat-feed real-chat-feed">
-                  {state.recentChat.length ? state.recentChat.slice(-6).map((entry) => <div className={`chat-command ${entry.role}`} key={entry.id}><div className="chat-line"><span className="chat-avatar">{entry.username.slice(0, 1).toUpperCase()}</span><p><strong>{entry.username}{entry.role === "streamer" && <em>STREAMER</em>}</strong><span>{entry.message}</span></p></div>{entry.reply && <div className="chat-reply">↳ {entry.reply}</div>}</div>) : <p className="empty-state">Les commandes envoyées dans ton véritable chat Twitch apparaîtront ici.</p>}
+                  {state.recentChat.length ? state.recentChat.slice(-6).map((entry) => <div className={`chat-command ${entry.role}`} key={entry.id}><div className="chat-line"><span className="chat-avatar">{entry.username.slice(0, 1).toUpperCase()}</span><p><strong>{entry.username}{entry.role === "streamer" && <em>{copy.streamer}</em>}</strong><span>{entry.message}</span></p></div>{entry.reply && <div className="chat-reply">↳ {entry.reply}</div>}</div>) : <p className="empty-state">{copy.emptyChat}</p>}
                   <div ref={chatEndRef} />
                 </div>
               </section>
@@ -588,47 +603,47 @@ export default function Dashboard() {
 
         {activeView === "overlay" && (
           <section className="subpage overlay-page">
-            <div className="subpage-intro"><span className="section-icon violet"><Icon name="overlay" /></span><div><small>3 SOURCES NAVIGATEUR</small><h2>Tes overlays OBS</h2><p>Choisis le timer, la Task List, ou les deux. Chaque source reste transparente et synchronisée avec le chat.</p></div></div>
+            <div className="subpage-intro"><span className="section-icon violet"><Icon name="overlay" /></span><div><small>{copy.browserSources}</small><h2>{copy.yourObsOverlays}</h2><p>{copy.overlayIntro}</p></div></div>
             <section className="overlay-theme-picker" aria-labelledby="overlay-theme-title">
-              <div className="overlay-theme-heading"><span><small>APPARENCE DE L’OVERLAY</small><strong id="overlay-theme-title">Choisis un thème sobre</strong></span><p>Le thème sélectionné sera inclus dans le lien que tu copieras.</p></div>
-              <div className="overlay-theme-grid" role="group" aria-label="Thèmes de couleurs disponibles">
+              <div className="overlay-theme-heading"><span><small>{copy.overlayAppearance}</small><strong id="overlay-theme-title">{copy.chooseTheme}</strong></span><p>{copy.themeInLink}</p></div>
+              <div className="overlay-theme-grid" role="group" aria-label={copy.availableThemes}>
                 {overlayThemes.map((theme) => (
                   <button className={overlayTheme === theme.id ? "selected" : ""} key={theme.id} onClick={() => setOverlayTheme(theme.id)} aria-pressed={overlayTheme === theme.id}>
                     <span className="theme-swatches" aria-hidden="true">{theme.colors.map((color) => <i key={color} style={{ background: color }} />)}</span>
-                    <strong>{theme.name}</strong>
-                    {overlayTheme === theme.id && <em>CHOISI</em>}
+                    <strong>{copy.themeNames[theme.id]}</strong>
+                    {overlayTheme === theme.id && <em>{copy.chosen}</em>}
                   </button>
                 ))}
               </div>
             </section>
             <section className="timer-layout-picker" aria-labelledby="timer-layout-title">
-              <div className="overlay-theme-heading"><span><small>MODÈLE DU TIMER</small><strong id="timer-layout-title">Choisis une présentation</strong></span><p>Le modèle s’applique au timer seul et à la source combinée.</p></div>
-              <div className="timer-layout-grid" role="group" aria-label="Modèles de timer disponibles">
+              <div className="overlay-theme-heading"><span><small>{copy.timerModel}</small><strong id="timer-layout-title">{copy.chooseLayout}</strong></span><p>{copy.layoutApplies}</p></div>
+              <div className="timer-layout-grid" role="group" aria-label={copy.availableLayouts}>
                 {timerLayouts.map((layout) => (
-                  <button className={timerLayout === layout.id ? "selected" : ""} key={layout.id} onClick={() => setTimerLayout(layout.id)} aria-pressed={timerLayout === layout.id}>
-                    <span className={`timer-layout-mini mini-${layout.id}`} aria-hidden="true"><i /><b /><em /></span>
-                    <span><strong>{layout.name}</strong><small>{layout.description}</small></span>
-                    {timerLayout === layout.id && <em>CHOISI</em>}
+                  <button className={timerLayout === layout ? "selected" : ""} key={layout} onClick={() => setTimerLayout(layout)} aria-pressed={timerLayout === layout}>
+                    <span className={`timer-layout-mini mini-${layout}`} aria-hidden="true"><i /><b /><em /></span>
+                    <span><strong>{copy.timerLayouts[layout].name}</strong><small>{copy.timerLayouts[layout].description}</small></span>
+                    {timerLayout === layout && <em>{copy.chosen}</em>}
                   </button>
                 ))}
               </div>
             </section>
             <section className="overlay-logo-picker" aria-labelledby="overlay-logo-title">
-              <div className="overlay-theme-heading"><span><small>LOGO OU PETITE IMAGE</small><strong id="overlay-logo-title">Ajoute ton PNG</strong></span><p>Il apparaîtra automatiquement dans les trois sources OBS.</p></div>
+              <div className="overlay-theme-heading"><span><small>{copy.logoOrImage}</small><strong id="overlay-logo-title">{copy.addPng}</strong></span><p>{copy.logoApplies}</p></div>
               <div className="overlay-logo-content">
-                <div className={`overlay-logo-preview logo-${logoPosition}`} aria-label="Aperçu de la position du logo">
-                  <span>ZONE OBS</span>
-                  {displayedLogoUrl ? <i role="img" aria-label="Logo sélectionné" style={{ width: `${Math.max(34, logoSize * .58)}px`, height: `${Math.max(34, logoSize * .58)}px`, backgroundImage: `url(${displayedLogoUrl})` }} /> : <em>PNG</em>}
+                <div className={`overlay-logo-preview logo-${logoPosition}`} aria-label={copy.logoPositionPreview}>
+                  <span>{copy.obsArea}</span>
+                  {displayedLogoUrl ? <i role="img" aria-label={copy.selectedLogo} style={{ width: `${Math.max(34, logoSize * .58)}px`, height: `${Math.max(34, logoSize * .58)}px`, backgroundImage: `url(${displayedLogoUrl})` }} /> : <em>PNG</em>}
                 </div>
                 <div className="overlay-logo-controls">
                   <label className="logo-file-button">
                     <input ref={logoInputRef} type="file" accept="image/png,.png" onChange={(event) => chooseLogo(event.target.files?.[0] ?? null)} disabled={!state.channel.connected || busy} />
-                    <span>{state.branding.hasLogo || logoFile ? "Remplacer le PNG" : "Choisir un PNG"}</span>
-                    <small>500 Ko maximum</small>
+                    <span>{state.branding.hasLogo || logoFile ? copy.replacePng : copy.choosePng}</span>
+                    <small>{copy.maxPng}</small>
                   </label>
-                  <fieldset><legend>Position</legend><div className="logo-position-grid">{logoPositionOptions.map((position) => <button type="button" className={logoPosition === position.id ? "selected" : ""} key={position.id} onClick={() => setLogoPosition(position.id)} aria-pressed={logoPosition === position.id}>{position.label}</button>)}</div></fieldset>
-                  <label className="logo-size-control"><span>Taille <strong>{logoSize} px</strong></span><input type="range" min="40" max="180" step="4" value={logoSize} onChange={(event) => setLogoSize(Number(event.target.value))} /></label>
-                  <div className="logo-actions"><button className="save-button" onClick={saveLogo} disabled={busy || !state.channel.connected || (!logoFile && !state.branding.hasLogo)}>Enregistrer le logo</button>{state.branding.hasLogo && <button className="logo-remove-button" onClick={removeLogo} disabled={busy}>Retirer</button>}</div>
+                  <fieldset><legend>{copy.position}</legend><div className="logo-position-grid">{logoPositionOptions.map((position) => <button type="button" className={logoPosition === position ? "selected" : ""} key={position} onClick={() => setLogoPosition(position)} aria-pressed={logoPosition === position}>{copy.logoPositions[position]}</button>)}</div></fieldset>
+                  <label className="logo-size-control"><span>{copy.size} <strong>{logoSize} px</strong></span><input type="range" min="40" max="180" step="4" value={logoSize} onChange={(event) => setLogoSize(Number(event.target.value))} /></label>
+                  <div className="logo-actions"><button className="save-button" onClick={saveLogo} disabled={busy || !state.channel.connected || (!logoFile && !state.branding.hasLogo)}>{copy.saveLogo}</button>{state.branding.hasLogo && <button className="logo-remove-button" onClick={removeLogo} disabled={busy}>{copy.remove}</button>}</div>
                 </div>
               </div>
             </section>
@@ -640,28 +655,28 @@ export default function Dashboard() {
                     <span><strong>{source.title}</strong><small>{source.description}</small></span>
                     <em>{source.size}</em>
                   </button>
-                  <div className="url-box"><code>{source.url}</code><button onClick={() => copyOverlay(source)} disabled={!state.channel.id}><Icon name="copy" /> {copiedOverlay === source.mode ? "Copiée !" : "Copier"}</button></div>
+                  <div className="url-box"><code>{source.url}</code><button onClick={() => copyOverlay(source)} disabled={!state.channel.id}><Icon name="copy" /> {copiedOverlay === source.mode ? copy.copied : copy.copy}</button></div>
                 </article>
               ))}
             </div>
-            {state.channel.id && <div className="overlay-preview-shell"><div className="preview-label"><span>APERÇU — {selectedOverlay.title.toUpperCase()} · {overlayThemes.find((theme) => theme.id === overlayTheme)?.name.toUpperCase()}{selectedOverlay.mode !== "tasks" ? ` · ${timerLayouts.find((layout) => layout.id === timerLayout)?.name.toUpperCase()}` : ""}</span><a href={selectedOverlay.url} target="_blank" rel="noreferrer">Ouvrir dans un nouvel onglet ↗</a></div><iframe className={`preview-${selectedOverlay.mode}`} key={`${selectedOverlay.mode}-${overlayTheme}-${timerLayout}`} title={`Aperçu OBS — ${selectedOverlay.title}`} src={selectedOverlay.url} /></div>}
-            <div className="obs-steps"><div><span>1</span><p><strong>Choisis ta source</strong>Timer, Task List ou les deux.</p></div><div><span>2</span><p><strong>Copie son URL</strong>Ajoute une source « Navigateur » dans OBS.</p></div><div><span>3</span><p><strong>Utilise la taille indiquée</strong>Tu peux ensuite la placer librement dans ta scène.</p></div></div>
+            {state.channel.id && <div className="overlay-preview-shell"><div className="preview-label"><span>{copy.preview} — {selectedOverlay.title.toUpperCase()} · {copy.themeNames[overlayTheme].toUpperCase()}{selectedOverlay.mode !== "tasks" ? ` · ${copy.timerLayouts[timerLayout].name.toUpperCase()}` : ""}</span><a href={selectedOverlay.url} target="_blank" rel="noreferrer">{copy.openNewTab} ↗</a></div><iframe className={`preview-${selectedOverlay.mode}`} key={`${selectedOverlay.mode}-${overlayTheme}-${timerLayout}-${language}`} title={`${copy.obsPreview} — ${selectedOverlay.title}`} src={selectedOverlay.url} /></div>}
+            <div className="obs-steps"><div><span>1</span><p><strong>{copy.chooseSource}</strong>{copy.chooseSourceText}</p></div><div><span>2</span><p><strong>{copy.copyUrl}</strong>{copy.copyUrlText}</p></div><div><span>3</span><p><strong>{copy.useSize}</strong>{copy.useSizeText}</p></div></div>
           </section>
         )}
 
         {activeView === "commands" && (
           <section className="subpage commands-page">
-            <div className="subpage-intro"><span className="section-icon mint"><Icon name="commands" /></span><div><small>TÉLÉCOMMANDE DU STREAM</small><h2>Commandes disponibles</h2><p>Écris ces commandes directement dans le chat de ta chaîne Twitch.</p></div></div>
-            <div className="command-table"><div className="command-head"><span>Commande</span><span>Effet</span><span>Accès</span></div>{commandGroups.map((item) => <div className="command-row" key={item.command}><code>{item.command}</code><span>{item.description}</span><em>{item.access}</em></div>)}</div>
-            <div className="permission-note"><span>◈</span><p><strong>Permissions sûres par défaut</strong>Les viewers gèrent uniquement leurs propres tâches. Seul le streamer peut modifier ou arrêter le Pomodoro.</p></div>
+            <div className="subpage-intro"><span className="section-icon mint"><Icon name="commands" /></span><div><small>{copy.streamRemote}</small><h2>{copy.availableCommands}</h2><p>{copy.commandsIntro}</p></div></div>
+            <div className="command-table"><div className="command-head"><span>{copy.command}</span><span>{copy.effect}</span><span>{copy.access}</span></div>{commandGroups.map((item, index) => <div className="command-row" key={item.command}><code>{item.command}</code><span>{copy.commandDescriptions[index]}</span><em>{item.access === "streamer" ? copy.accessStreamer : copy.accessEveryone}</em></div>)}</div>
+            <div className="permission-note"><span>◈</span><p><strong>{copy.safePermissions}</strong>{copy.safePermissionsText}</p></div>
           </section>
         )}
 
         {activeView === "settings" && (
           <section className="subpage settings-page">
             <div className="settings-grid">
-              <div className="settings-panel"><small>MINUTEUR</small><h2>Rythme par défaut</h2><div className="settings-fields"><label>Focus<input aria-label="Durée de focus par défaut" type="number" value={focus} onChange={(event) => setFocus(Number(event.target.value))} /><span>minutes</span></label><label>Pause<input aria-label="Durée de pause par défaut" type="number" value={rest} onChange={(event) => setRest(Number(event.target.value))} /><span>minutes</span></label><label>Sessions<input aria-label="Nombre de sessions par défaut" type="number" value={sessions} onChange={(event) => setSessions(Number(event.target.value))} /><span>cycles</span></label></div><button className="save-button" onClick={saveSettings} disabled={!state.channel.connected}>Enregistrer</button></div>
-              <div className="settings-panel"><small>TWITCH</small><h2>État de la connexion</h2><div className="connection-summary"><span>Compte</span><strong>{state.channel.connected ? `@${state.channel.username}` : "Non connecté"}</strong></div><div className="connection-summary"><span>Commandes du chat</span><strong>{state.channel.chatConnected ? "Actives" : "Inactives"}</strong></div>{state.channel.connected ? <button className="disconnect-button" onClick={disconnect} disabled={busy}>Déconnecter Twitch</button> : <a className="save-button settings-connect" href="/api/auth/twitch/start">Se connecter à Twitch</a>}</div>
+              <div className="settings-panel"><small>{copy.timer}</small><h2>{copy.defaultRhythm}</h2><div className="settings-fields"><label>{copy.focus}<input aria-label={copy.defaultFocusDuration} type="number" value={focus} onChange={(event) => setFocus(Number(event.target.value))} /><span>{copy.minutes}</span></label><label>{copy.break}<input aria-label={copy.defaultBreakDuration} type="number" value={rest} onChange={(event) => setRest(Number(event.target.value))} /><span>{copy.minutes}</span></label><label>{copy.sessionsWord}<input aria-label={copy.defaultSessions} type="number" value={sessions} onChange={(event) => setSessions(Number(event.target.value))} /><span>{copy.cycles}</span></label></div><button className="save-button" onClick={saveSettings} disabled={!state.channel.connected}>{copy.save}</button></div>
+              <div className="settings-panel"><small>TWITCH</small><h2>{copy.connectionStatus}</h2><div className="connection-summary"><span>{copy.account}</span><strong>{state.channel.connected ? `@${state.channel.username}` : copy.notConnected}</strong></div><div className="connection-summary"><span>{copy.chatCommands}</span><strong>{state.channel.chatConnected ? copy.active : copy.inactive}</strong></div>{state.channel.connected ? <button className="disconnect-button" onClick={disconnect} disabled={busy}>{copy.disconnect} Twitch</button> : <a className="save-button settings-connect" href="/api/auth/twitch/start">{copy.connectTwitch}</a>}</div>
             </div>
           </section>
         )}

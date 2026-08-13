@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { isLanguage, overlayCopy, type Language } from "@/app/i18n";
+
 type OverlayState = {
   channel: { id: string; username: string; connected: boolean };
   timer: {
@@ -43,6 +45,7 @@ export default function Overlay() {
   const [display, setDisplay] = useState<"timer" | "tasks" | "combined">("combined");
   const [theme, setTheme] = useState<OverlayTheme>("focus");
   const [timerLayout, setTimerLayout] = useState<TimerLayout>("classic");
+  const [language, setLanguage] = useState<Language>("fr");
   const taskListRef = useRef<HTMLDivElement>(null);
   const channelId = typeof window === "undefined"
     ? ""
@@ -55,13 +58,17 @@ export default function Overlay() {
     const requestedDisplay = searchParams.get("display");
     const requestedTheme = searchParams.get("theme") as OverlayTheme | null;
     const requestedTimerLayout = searchParams.get("timerStyle") as TimerLayout | null;
+    const requestedLanguage = searchParams.get("lang");
     const nextDisplay = requestedDisplay === "timer" || requestedDisplay === "tasks" ? requestedDisplay : "combined";
     const nextTheme = requestedTheme && overlayThemeIds.includes(requestedTheme) ? requestedTheme : "focus";
     const nextTimerLayout = requestedTimerLayout && timerLayoutIds.includes(requestedTimerLayout) ? requestedTimerLayout : "classic";
+    const nextLanguage = isLanguage(requestedLanguage) ? requestedLanguage : "fr";
     const updateDisplay = window.setTimeout(() => {
       setDisplay(nextDisplay);
       setTheme(nextTheme);
       setTimerLayout(nextTimerLayout);
+      setLanguage(nextLanguage);
+      document.documentElement.lang = nextLanguage;
     }, 0);
     return () => window.clearTimeout(updateDisplay);
   }, []);
@@ -98,7 +105,9 @@ export default function Overlay() {
 
   const total = (state.timer.phase === "FOCUS" ? state.timer.focusDuration : state.timer.breakDuration) * 60;
   const progress = state.timer.status === "IDLE" ? 0 : Math.min(100, Math.max(0, (1 - state.timer.remainingSeconds / total) * 100));
-  const label = useMemo(() => state.timer.status === "PAUSED" ? "PAUSED" : state.timer.status === "IDLE" ? "READY" : state.timer.status === "FINISHED" ? "FINISHED" : state.timer.phase, [state.timer]);
+  const copy = overlayCopy[language];
+  const phaseClass = state.timer.status === "PAUSED" ? "paused" : state.timer.status === "IDLE" ? "ready" : state.timer.status === "FINISHED" ? "finished" : state.timer.phase.toLowerCase();
+  const label = state.timer.status === "PAUSED" ? copy.paused : state.timer.status === "IDLE" ? copy.ready : state.timer.status === "FINISHED" ? copy.finished : state.timer.phase === "BREAK" ? copy.break : copy.focus;
   const taskGroups = useMemo(() => {
     const groups = new Map<string, { username: string; tasks: OverlayState["tasks"] }>();
     for (const task of state.tasks) {
@@ -158,18 +167,18 @@ export default function Overlay() {
           <div className="obs-live"><i /> @{state.channel.username}</div>
         </div>
         <div className="obs-body">
-          <div className="obs-session"><span>SESSION</span><strong>{state.timer.currentSession}<i>/</i>{state.timer.totalSessions}</strong></div>
-          <div className="obs-timer"><strong>{formatTime(state.timer.remainingSeconds)}</strong><span className={`obs-phase ${label.toLowerCase()}`}><i />{label}</span></div>
+          <div className="obs-session"><span>{copy.session}</span><strong>{state.timer.currentSession}<i>/</i>{state.timer.totalSessions}</strong></div>
+          <div className="obs-timer"><strong>{formatTime(state.timer.remainingSeconds)}</strong><span className={`obs-phase ${phaseClass}`}><i />{label}</span></div>
         </div>
         <div className="obs-progress"><i style={{ width: `${progress}%` }} /></div>
         <div className="obs-footer">
-          <span>{state.timer.phase === "FOCUS" ? "Prochaine pause" : "Prochain focus"} <strong>{state.timer.phase === "FOCUS" ? state.timer.breakDuration : state.timer.focusDuration} min</strong></span>
-          <span>{Math.round(progress)}% complété</span>
+          <span>{state.timer.phase === "FOCUS" ? copy.nextBreak : copy.nextFocus} <strong>{state.timer.phase === "FOCUS" ? state.timer.breakDuration : state.timer.focusDuration} min</strong></span>
+          <span>{Math.round(progress)}% {copy.completed}</span>
         </div>
       </section>}
       {showTasks && (
         <section className="obs-tasks">
-          <header className="obs-task-header"><span><small>OBJECTIFS DU CHAT</small><strong>TASK LIST</strong></span><em>{state.tasks.length} tâche{state.tasks.length > 1 ? "s" : ""}</em></header>
+          <header className="obs-task-header"><span><small>{copy.chatGoals}</small><strong>{copy.taskList}</strong></span><em>{state.tasks.length} {state.tasks.length > 1 ? copy.tasks : copy.task}</em></header>
           <div className="obs-task-scroll" ref={taskListRef}>
             {taskGroups.length ? taskGroups.map((group) => (
               <section className="obs-task-group" key={group.id}>
@@ -180,11 +189,11 @@ export default function Overlay() {
                   </div>
                 ))}
               </section>
-            )) : <p className="obs-task-empty">Les tâches du chat apparaîtront ici.</p>}
+            )) : <p className="obs-task-empty">{copy.empty}</p>}
           </div>
         </section>
       )}
-      {logoUrl && <i className={`obs-custom-logo obs-logo-${state.branding.position}`} role="img" aria-label="Logo de la chaîne" style={{ width: `${state.branding.size}px`, height: `${state.branding.size}px`, backgroundImage: `url(${logoUrl})` }} />}
+      {logoUrl && <i className={`obs-custom-logo obs-logo-${state.branding.position}`} role="img" aria-label={copy.logo} style={{ width: `${state.branding.size}px`, height: `${state.branding.size}px`, backgroundImage: `url(${logoUrl})` }} />}
     </main>
   );
 }

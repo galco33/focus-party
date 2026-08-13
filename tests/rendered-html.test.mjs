@@ -35,12 +35,12 @@ test("server-renders the dedicated OBS overlay", async () => {
   const html = await response.text();
   assert.match(html, /FOCUS PARTY/);
   assert.match(html, /SESSION/);
-  assert.match(html, /READY/);
-  assert.match(html, /TASK LIST/);
+  assert.match(html, /PRÊT/);
+  assert.match(html, /LISTE DES TÂCHES/);
 });
 
 test("keeps persistence, overlay modes and starter cleanup explicit", async () => {
-  const [hosting, migration, brandingMigration, packageJson, dashboardSource, overlaySource, brandingRoute] = await Promise.all([
+  const [hosting, migration, brandingMigration, packageJson, dashboardSource, overlaySource, brandingRoute, i18nSource] = await Promise.all([
     readFile(new URL("../.openai/hosting.json", import.meta.url), "utf8"),
     readFile(new URL("../drizzle/0000_init_focus_party.sql", import.meta.url), "utf8"),
     readFile(new URL("../drizzle/0002_short_miracleman.sql", import.meta.url), "utf8"),
@@ -48,6 +48,7 @@ test("keeps persistence, overlay modes and starter cleanup explicit", async () =
     readFile(new URL("../app/Dashboard.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/overlay/Overlay.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/branding/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/i18n.ts", import.meta.url), "utf8"),
   ]);
   assert.match(hosting, /"d1":\s*"DB"/);
   assert.match(hosting, /"r2":\s*null/);
@@ -56,19 +57,25 @@ test("keeps persistence, overlay modes and starter cleanup explicit", async () =
   assert.match(brandingMigration, /CREATE TABLE `overlay_branding`/);
   assert.match(brandingMigration, /`logo_data` blob/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
-  assert.match(dashboardSource, /Timer uniquement/);
-  assert.match(dashboardSource, /Task List uniquement/);
-  assert.match(dashboardSource, /Timer \+ Task List/);
-  assert.match(dashboardSource, /Focus.*Graphite.*Sable.*Océan.*Prune.*Glace/s);
+  assert.match(i18nSource, /Timer uniquement/);
+  assert.match(i18nSource, /Task List uniquement/);
+  assert.match(i18nSource, /Timer \+ Task List/);
+  assert.match(i18nSource, /Focus.*Graphite.*Sable.*Océan.*Prune.*Glace/s);
   assert.match(dashboardSource, /theme=\$\{overlayTheme\}/);
-  assert.match(dashboardSource, /Classique.*Essentiel.*Compact.*Centré.*Ligne.*Contour/s);
+  assert.match(i18nSource, /Classique.*Essentiel.*Compact.*Centré.*Ligne.*Contour/s);
   assert.match(dashboardSource, /timerStyle=\$\{timerLayout\}/);
+  assert.match(dashboardSource, /lang=\$\{language\}/);
+  assert.match(dashboardSource, /focus-party-language/);
+  assert.match(i18nSource, /Français.*English.*Español/s);
+  assert.match(i18nSource, /Choose language.*Elegir idioma/s);
   assert.match(overlaySource, /display !== "tasks"/);
   assert.match(overlaySource, /display !== "timer"/);
+  assert.match(overlaySource, /requestedLanguage/);
+  assert.match(overlaySource, /useState<Language>\("fr"\)/);
   assert.match(overlaySource, /obs-theme-\$\{theme\}/);
   assert.match(overlaySource, /obs-layout-\$\{timerLayout\}/);
-  assert.match(dashboardSource, /LOGO OU PETITE IMAGE/);
-  assert.match(dashboardSource, /Haut gauche.*Haut droite.*Bas gauche.*Bas droite/s);
+  assert.match(i18nSource, /LOGO OU PETITE IMAGE/);
+  assert.match(i18nSource, /Haut gauche.*Haut droite.*Bas gauche.*Bas droite/s);
   assert.match(overlaySource, /obs-custom-logo/);
   assert.match(brandingRoute, /image\/png/);
   assert.match(brandingRoute, /MAX_LOGO_BYTES/);
