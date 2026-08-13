@@ -1,4 +1,4 @@
-import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { blob, index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 export const channels = sqliteTable("channels", {
   id: text("id").primaryKey(),
@@ -84,3 +84,12 @@ export const chatEvents = sqliteTable("chat_events", {
   uniqueIndex("idx_chat_events_twitch_message").on(table.twitchMessageId),
   index("idx_chat_events_channel_created").on(table.channelId, table.createdAt),
 ]);
+
+export const overlayBranding = sqliteTable("overlay_branding", {
+  channelId: text("channel_id").primaryKey(),
+  logoData: blob("logo_data").notNull(),
+  logoFilename: text("logo_filename").notNull(),
+  logoPosition: text("logo_position").notNull().default("bottom-right"),
+  logoSize: integer("logo_size").notNull().default(84),
+  updatedAt: text("updated_at").notNull(),
+});

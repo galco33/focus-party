@@ -1,3 +1,5 @@
+import { defaultBranding, getBranding } from "@/lib/branding";
+
 export type Role = "streamer" | "moderator" | "viewer";
 
 export type Actor = {
@@ -57,6 +59,7 @@ export function disconnectedState() {
     },
     tasks: [],
     recentChat: [],
+    branding: defaultBranding,
   };
 }
 
@@ -131,7 +134,7 @@ export async function getState(database: D1Database, channelId: string) {
   if (!channel) return disconnectedState();
 
   await ensureChannelTimer(database, channelId);
-  const [timer, tasks, chat] = await Promise.all([
+  const [timer, tasks, chat, branding] = await Promise.all([
     getTimer(database, channelId),
     database.prepare(
       `SELECT id, user_id AS userId, username, text, completed, created_at AS createdAt
@@ -141,6 +144,7 @@ export async function getState(database: D1Database, channelId: string) {
       `SELECT id, username, role, message, reply, created_at
        FROM chat_events WHERE channel_id = ? ORDER BY id DESC LIMIT 12`,
     ).bind(channelId).all<ChatEventRow>(),
+    getBranding(database, channelId),
   ]);
 
   return {
@@ -170,6 +174,7 @@ export async function getState(database: D1Database, channelId: string) {
       reply: entry.reply,
       createdAt: entry.created_at,
     })),
+    branding,
   };
 }
 

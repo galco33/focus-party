@@ -40,16 +40,21 @@ test("server-renders the dedicated OBS overlay", async () => {
 });
 
 test("keeps persistence, overlay modes and starter cleanup explicit", async () => {
-  const [hosting, migration, packageJson, dashboardSource, overlaySource] = await Promise.all([
+  const [hosting, migration, brandingMigration, packageJson, dashboardSource, overlaySource, brandingRoute] = await Promise.all([
     readFile(new URL("../.openai/hosting.json", import.meta.url), "utf8"),
     readFile(new URL("../drizzle/0000_init_focus_party.sql", import.meta.url), "utf8"),
+    readFile(new URL("../drizzle/0002_short_miracleman.sql", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
     readFile(new URL("../app/Dashboard.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/overlay/Overlay.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/branding/route.ts", import.meta.url), "utf8"),
   ]);
   assert.match(hosting, /"d1":\s*"DB"/);
+  assert.match(hosting, /"r2":\s*null/);
   assert.match(migration, /CREATE TABLE `pomodoro_sessions`/);
   assert.match(migration, /idx_tasks_channel_user/);
+  assert.match(brandingMigration, /CREATE TABLE `overlay_branding`/);
+  assert.match(brandingMigration, /`logo_data` blob/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
   assert.match(dashboardSource, /Timer uniquement/);
   assert.match(dashboardSource, /Task List uniquement/);
@@ -62,5 +67,10 @@ test("keeps persistence, overlay modes and starter cleanup explicit", async () =
   assert.match(overlaySource, /display !== "timer"/);
   assert.match(overlaySource, /obs-theme-\$\{theme\}/);
   assert.match(overlaySource, /obs-layout-\$\{timerLayout\}/);
+  assert.match(dashboardSource, /LOGO OU PETITE IMAGE/);
+  assert.match(dashboardSource, /Haut gauche.*Haut droite.*Bas gauche.*Bas droite/s);
+  assert.match(overlaySource, /obs-custom-logo/);
+  assert.match(brandingRoute, /image\/png/);
+  assert.match(brandingRoute, /MAX_LOGO_BYTES/);
   await assert.rejects(access(new URL("../app/_sites-preview/SkeletonPreview.tsx", import.meta.url)));
 });

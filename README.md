@@ -17,6 +17,7 @@ Le projet est entièrement open source sous licence MIT. Vous pouvez le forker, 
 - minuteur Pomodoro contrôlé depuis Twitch ;
 - listes de tâches personnelles, isolées par viewer et par chaîne ;
 - dashboard et overlay OBS synchronisés en temps réel ;
+- ajout facultatif d’un logo PNG avec taille et position personnalisables dans les trois sources OBS ;
 - fonctionnement multi-chaînes : chaque streamer possède ses propres données ;
 - chiffrement des jetons Twitch avant leur stockage dans Cloudflare D1.
 
@@ -44,7 +45,7 @@ Un viewer ne peut jamais modifier les tâches d’un autre viewer. Une personne 
 
 ```text
 Chat Twitch ──EventSub──> Worker Cloudflare ──> D1 (données)
-                              │
+                              │               └──> logos PNG
                               ├──> API / commandes / OAuth
                               │
                               └──> Durable Object ──WebSocket──> Dashboard + overlay OBS

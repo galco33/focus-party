@@ -14,6 +14,12 @@ type OverlayState = {
     remainingSeconds: number;
   };
   tasks: Array<{ id: number; userId: string; username: string; text: string; completed: number | boolean }>;
+  branding: {
+    hasLogo: boolean;
+    position: "top-left" | "top-right" | "bottom-left" | "bottom-right";
+    size: number;
+    updatedAt: string | null;
+  };
 };
 
 type OverlayTheme = "focus" | "graphite" | "sand" | "ocean" | "plum" | "frost";
@@ -25,6 +31,7 @@ const fallback: OverlayState = {
   channel: { id: "", username: "focus-party", connected: false },
   timer: { currentSession: 1, totalSessions: 5, focusDuration: 25, breakDuration: 5, status: "IDLE", phase: "FOCUS", remainingSeconds: 1500 },
   tasks: [],
+  branding: { hasLogo: false, position: "bottom-right", size: 84, updatedAt: null },
 };
 
 function formatTime(seconds: number) {
@@ -103,6 +110,9 @@ export default function Overlay() {
     return Array.from(groups.entries()).map(([id, group]) => ({ id, ...group }));
   }, [state.tasks]);
   const taskScrollKey = state.tasks.map((task) => `${task.id}:${Number(Boolean(task.completed))}`).join("|");
+  const logoUrl = state.branding.hasLogo && channelId
+    ? `/api/logo?channel=${encodeURIComponent(channelId)}&v=${encodeURIComponent(state.branding.updatedAt ?? "logo")}`
+    : "";
 
   useEffect(() => {
     const viewport = taskListRef.current;
@@ -174,6 +184,7 @@ export default function Overlay() {
           </div>
         </section>
       )}
+      {logoUrl && <i className={`obs-custom-logo obs-logo-${state.branding.position}`} role="img" aria-label="Logo de la chaîne" style={{ width: `${state.branding.size}px`, height: `${state.branding.size}px`, backgroundImage: `url(${logoUrl})` }} />}
     </main>
   );
 }

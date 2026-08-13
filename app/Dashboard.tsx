@@ -40,11 +40,19 @@ type AppState = {
   timer: Timer;
   tasks: Task[];
   recentChat: ChatEvent[];
+  branding: {
+    hasLogo: boolean;
+    filename: string | null;
+    position: LogoPosition;
+    size: number;
+    updatedAt: string | null;
+  };
 };
 
 type OverlayMode = "timer" | "tasks" | "combined";
 type OverlayTheme = "focus" | "graphite" | "sand" | "ocean" | "plum" | "frost";
 type TimerLayout = "classic" | "essential" | "compact" | "centered" | "line" | "outline";
+type LogoPosition = "top-left" | "top-right" | "bottom-left" | "bottom-right";
 
 const overlayThemes: Array<{ id: OverlayTheme; name: string; colors: [string, string, string] }> = [
   { id: "focus", name: "Focus", colors: ["#171421", "#d9f573", "#fffef9"] },
@@ -62,6 +70,13 @@ const timerLayouts: Array<{ id: TimerLayout; name: string; description: string }
   { id: "centered", name: "Centré", description: "Composition symétrique" },
   { id: "line", name: "Ligne", description: "Format horizontal" },
   { id: "outline", name: "Contour", description: "Cadre fin et discret" },
+];
+
+const logoPositionOptions: Array<{ id: LogoPosition; label: string }> = [
+  { id: "top-left", label: "Haut gauche" },
+  { id: "top-right", label: "Haut droite" },
+  { id: "bottom-left", label: "Bas gauche" },
+  { id: "bottom-right", label: "Bas droite" },
 ];
 
 const fallbackState: AppState = {
@@ -84,6 +99,7 @@ const fallbackState: AppState = {
   },
   tasks: [],
   recentChat: [],
+  branding: { hasLogo: false, filename: null, position: "bottom-right", size: 84, updatedAt: null },
 };
 
 const commandGroups = [
@@ -160,9 +176,15 @@ export default function Dashboard() {
   const [previewOverlay, setPreviewOverlay] = useState<OverlayMode>("combined");
   const [overlayTheme, setOverlayTheme] = useState<OverlayTheme>("focus");
   const [timerLayout, setTimerLayout] = useState<TimerLayout>("classic");
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState("");
+  const [logoPosition, setLogoPosition] = useState<LogoPosition>("bottom-right");
+  const [logoSize, setLogoSize] = useState(84);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const taskListRef = useRef<HTMLDivElement>(null);
   const taskScrollPausedRef = useRef(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const brandingRevisionRef = useRef<string | null | undefined>(undefined);
 
   const notify = useCallback((message: string) => {
     setToast(message);
@@ -174,6 +196,11 @@ export default function Dashboard() {
     setFocus(next.timer.focusDuration);
     setRest(next.timer.breakDuration);
     setSessions(next.timer.totalSessions);
+    if (brandingRevisionRef.current !== next.branding.updatedAt) {
+      brandingRevisionRef.current = next.branding.updatedAt;
+      setLogoPosition(next.branding.position);
+      setLogoSize(next.branding.size);
+    }
   }, []);
 
   const refresh = useCallback(async () => {
@@ -236,6 +263,10 @@ export default function Dashboard() {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [state.recentChat]);
+
+  useEffect(() => () => {
+    if (logoPreviewUrl.startsWith("blob:")) URL.revokeObjectURL(logoPreviewUrl);
+  }, [logoPreviewUrl]);
 
   const taskScrollKey = state.tasks
     .map((task) => `${task.id}:${Number(Boolean(task.completed))}`)
@@ -338,6 +369,61 @@ export default function Dashboard() {
     }
   };
 
+  const chooseLogo = (file: File | null) => {
+    if (!file) return;
+    if (file.type !== "image/png") {
+      if (logoInputRef.current) logoInputRef.current.value = "";
+      return notify("Choisis une image au format PNG.");
+    }
+    if (file.size > 512 * 1024) {
+      if (logoInputRef.current) logoInputRef.current.value = "";
+      return notify("Le PNG ne doit pas dépasser 500 Ko.");
+    }
+    setLogoFile(file);
+    setLogoPreviewUrl(URL.createObjectURL(file));
+  };
+
+  const saveLogo = async () => {
+    if (!state.channel.connected) return notify("Connecte d’abord ta chaîne Twitch.");
+    setBusy(true);
+    try {
+      const form = new FormData();
+      form.set("position", logoPosition);
+      form.set("size", String(logoSize));
+      if (logoFile) form.set("logo", logoFile);
+      const response = await fetch("/api/branding", { method: "POST", body: form });
+      const result = await response.json() as { branding?: AppState["branding"]; error?: string };
+      if (!response.ok || !result.branding) throw new Error(result.error ?? "Impossible d’enregistrer le logo.");
+      setState((current) => ({ ...current, branding: result.branding! }));
+      setLogoFile(null);
+      setLogoPreviewUrl("");
+      if (logoInputRef.current) logoInputRef.current.value = "";
+      notify("Logo enregistré dans les sources OBS.");
+    } catch (error) {
+      notify(error instanceof Error ? error.message : "Une erreur est survenue.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const removeLogo = async () => {
+    setBusy(true);
+    try {
+      const response = await fetch("/api/branding", { method: "DELETE" });
+      const result = await response.json() as { branding?: AppState["branding"]; error?: string };
+      if (!response.ok || !result.branding) throw new Error(result.error ?? "Impossible de retirer le logo.");
+      setState((current) => ({ ...current, branding: result.branding! }));
+      setLogoFile(null);
+      setLogoPreviewUrl("");
+      if (logoInputRef.current) logoInputRef.current.value = "";
+      notify("Logo retiré des sources OBS.");
+    } catch (error) {
+      notify(error instanceof Error ? error.message : "Une erreur est survenue.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const totalSeconds = (state.timer.phase === "FOCUS" ? state.timer.focusDuration : state.timer.breakDuration) * 60;
   const progress = state.timer.status === "IDLE"
     ? 0
@@ -354,6 +440,10 @@ export default function Dashboard() {
     { mode: "combined", title: "Timer + Task List", description: "Le timer et les tâches dans une seule source.", size: "900 × 600 px", url: overlayBaseUrl ? `${overlayBaseUrl}&display=combined&theme=${overlayTheme}&timerStyle=${timerLayout}` : "Connecte Twitch pour obtenir ce lien" },
   ];
   const selectedOverlay = overlaySources.find((source) => source.mode === previewOverlay) ?? overlaySources[2];
+  const savedLogoUrl = state.channel.id && state.branding.hasLogo
+    ? `/api/logo?channel=${encodeURIComponent(state.channel.id)}&v=${encodeURIComponent(state.branding.updatedAt ?? "logo")}`
+    : "";
+  const displayedLogoUrl = logoPreviewUrl || savedLogoUrl;
 
   const copyOverlay = async (source: (typeof overlaySources)[number]) => {
     if (!state.channel.id) return notify("Connecte d’abord ta chaîne Twitch.");
@@ -521,6 +611,25 @@ export default function Dashboard() {
                     {timerLayout === layout.id && <em>CHOISI</em>}
                   </button>
                 ))}
+              </div>
+            </section>
+            <section className="overlay-logo-picker" aria-labelledby="overlay-logo-title">
+              <div className="overlay-theme-heading"><span><small>LOGO OU PETITE IMAGE</small><strong id="overlay-logo-title">Ajoute ton PNG</strong></span><p>Il apparaîtra automatiquement dans les trois sources OBS.</p></div>
+              <div className="overlay-logo-content">
+                <div className={`overlay-logo-preview logo-${logoPosition}`} aria-label="Aperçu de la position du logo">
+                  <span>ZONE OBS</span>
+                  {displayedLogoUrl ? <i role="img" aria-label="Logo sélectionné" style={{ width: `${Math.max(34, logoSize * .58)}px`, height: `${Math.max(34, logoSize * .58)}px`, backgroundImage: `url(${displayedLogoUrl})` }} /> : <em>PNG</em>}
+                </div>
+                <div className="overlay-logo-controls">
+                  <label className="logo-file-button">
+                    <input ref={logoInputRef} type="file" accept="image/png,.png" onChange={(event) => chooseLogo(event.target.files?.[0] ?? null)} disabled={!state.channel.connected || busy} />
+                    <span>{state.branding.hasLogo || logoFile ? "Remplacer le PNG" : "Choisir un PNG"}</span>
+                    <small>500 Ko maximum</small>
+                  </label>
+                  <fieldset><legend>Position</legend><div className="logo-position-grid">{logoPositionOptions.map((position) => <button type="button" className={logoPosition === position.id ? "selected" : ""} key={position.id} onClick={() => setLogoPosition(position.id)} aria-pressed={logoPosition === position.id}>{position.label}</button>)}</div></fieldset>
+                  <label className="logo-size-control"><span>Taille <strong>{logoSize} px</strong></span><input type="range" min="40" max="180" step="4" value={logoSize} onChange={(event) => setLogoSize(Number(event.target.value))} /></label>
+                  <div className="logo-actions"><button className="save-button" onClick={saveLogo} disabled={busy || !state.channel.connected || (!logoFile && !state.branding.hasLogo)}>Enregistrer le logo</button>{state.branding.hasLogo && <button className="logo-remove-button" onClick={removeLogo} disabled={busy}>Retirer</button>}</div>
+                </div>
               </div>
             </section>
             <div className="overlay-source-grid">

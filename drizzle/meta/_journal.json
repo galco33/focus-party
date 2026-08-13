@@ -15,6 +15,13 @@
       "when": 1786532734194,
       "tag": "0001_flimsy_shen",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1786620021055,
+      "tag": "0002_short_miracleman",
+      "breakpoints": true
     }
   ]
 }
