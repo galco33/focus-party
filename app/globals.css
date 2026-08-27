@@ -495,8 +495,8 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .obs-layout-outline .obs-brand span { color: var(--obs-accent); background: transparent; border: 1px solid var(--obs-accent); border-radius: 6px; }
 .obs-layout-outline .obs-body { padding-top: 16px; }
 .obs-layout-outline .obs-progress { height: 4px; }
-.obs-tasks { width: min(540px, 82vw); max-height: min(52vh, 430px); display: flex; flex-direction: column; overflow: hidden; background: var(--obs-task-gap); color: var(--obs-task-card-text); border: 1px solid var(--obs-task-border); border-radius: 7px; box-shadow: 0 13px 40px var(--obs-shadow); }
-.obs-display-tasks .obs-tasks { width: min(620px, 90vw); max-height: min(82vh, 700px); }
+.obs-tasks { width: min(310px, 82vw); max-height: min(52vh, 430px); display: flex; flex-direction: column; overflow: hidden; background: var(--obs-task-gap); color: var(--obs-task-card-text); border: 1px solid var(--obs-task-border); border-radius: 7px; box-shadow: 0 13px 40px var(--obs-shadow); }
+.obs-display-tasks .obs-tasks { width: min(310px, 90vw); max-height: min(82vh, 700px); }
 .obs-task-header { flex: 0 0 auto; min-height: 54px; display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 13px 19px; color: var(--obs-task-header-text); background: var(--obs-task-header-bg); border-bottom: 1px solid var(--obs-task-border); font-family: "Courier New", Courier, monospace; }
 .obs-task-header code { color: inherit; background: transparent; font-family: inherit; font-size: 12px; font-weight: 700; letter-spacing: .02em; }
 .obs-task-header > span { color: var(--obs-task-header-text); opacity: .82; font-size: 11px; font-variant-numeric: tabular-nums; }

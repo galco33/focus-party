@@ -478,7 +478,7 @@ export default function Dashboard() {
     : `${window.location.origin}/overlay?channel=${encodeURIComponent(state.channel.id)}`;
   const overlaySources: Array<{ mode: OverlayMode; title: string; description: string; size: string; url: string }> = [
     { mode: "timer", title: copy.timerOnly, description: copy.timerOnlyDescription, size: "900 × 300 px", url: overlayBaseUrl ? `${overlayBaseUrl}&display=timer&theme=${overlayTheme}&timerStyle=${timerLayout}&lang=${language}&sound=${overlaySound ? "on" : "off"}` : copy.connectForLink },
-    { mode: "tasks", title: copy.tasksOnly, description: copy.tasksOnlyDescription, size: "650 × 700 px", url: overlayBaseUrl ? `${overlayBaseUrl}&display=tasks&theme=${overlayTheme}&lang=${language}` : copy.connectForLink },
+    { mode: "tasks", title: copy.tasksOnly, description: copy.tasksOnlyDescription, size: "350 × 700 px", url: overlayBaseUrl ? `${overlayBaseUrl}&display=tasks&theme=${overlayTheme}&lang=${language}` : copy.connectForLink },
     { mode: "combined", title: copy.combined, description: copy.combinedDescription, size: "900 × 600 px", url: overlayBaseUrl ? `${overlayBaseUrl}&display=combined&theme=${overlayTheme}&timerStyle=${timerLayout}&lang=${language}&sound=${overlaySound ? "on" : "off"}` : copy.connectForLink },
   ];
   const selectedOverlay = overlaySources.find((source) => source.mode === previewOverlay) ?? overlaySources[2];
