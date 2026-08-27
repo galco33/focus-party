@@ -495,23 +495,23 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .obs-layout-outline .obs-brand span { color: var(--obs-accent); background: transparent; border: 1px solid var(--obs-accent); border-radius: 6px; }
 .obs-layout-outline .obs-body { padding-top: 16px; }
 .obs-layout-outline .obs-progress { height: 4px; }
-.obs-tasks { width: min(310px, 82vw); max-height: min(52vh, 430px); display: flex; flex-direction: column; overflow: hidden; background: var(--obs-task-gap); color: var(--obs-task-card-text); border: 1px solid var(--obs-task-border); border-radius: 7px; box-shadow: 0 13px 40px var(--obs-shadow); }
+.obs-tasks { width: min(310px, 82vw); max-height: min(52vh, 430px); display: flex; flex-direction: column; overflow: hidden; background: var(--obs-task-card-bg); color: var(--obs-task-card-text); border: 1px solid var(--obs-task-border); border-radius: 7px; box-shadow: 0 13px 40px var(--obs-shadow); }
 .obs-display-tasks .obs-tasks { width: min(310px, 90vw); max-height: min(82vh, 700px); }
 .obs-task-header { flex: 0 0 auto; min-height: 54px; display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 13px 19px; color: var(--obs-task-header-text); background: var(--obs-task-header-bg); border-bottom: 1px solid var(--obs-task-border); font-family: "Courier New", Courier, monospace; }
-.obs-task-header code { color: inherit; background: transparent; font-family: inherit; font-size: 12px; font-weight: 700; letter-spacing: .02em; }
-.obs-task-header > span { color: var(--obs-task-header-text); opacity: .82; font-size: 11px; font-variant-numeric: tabular-nums; }
+.obs-task-header code { color: inherit; background: transparent; font-family: inherit; font-size: 14px; font-weight: 700; letter-spacing: .02em; }
+.obs-task-header > span { color: var(--obs-task-header-text); opacity: .82; font-size: 13px; font-variant-numeric: tabular-nums; }
 .obs-task-header > span strong { color: inherit; font-size: inherit; }
-.obs-task-scroll { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 7px; padding: 7px; overflow: hidden; font-family: "Courier New", Courier, monospace; }
-.obs-task-group { flex: 0 0 auto; padding: 16px 19px 15px; color: var(--obs-task-card-text); background: var(--obs-task-card-bg); border: 1px solid var(--obs-task-border); border-radius: 5px; box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
+.obs-task-scroll { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 12px; padding: 14px 16px 16px; overflow: hidden; font-family: "Courier New", Courier, monospace; }
+.obs-task-group { flex: 0 0 auto; padding: 0; color: var(--obs-task-card-text); background: transparent; border: 0; border-radius: 0; box-shadow: none; }
 .obs-task-group > header { padding-bottom: 7px; }
-.obs-task-group > header strong { font-size: 13px; font-weight: 750; }
+.obs-task-group > header strong { font-size: 15px; font-weight: 750; }
 .obs-task-items { margin: 0; padding: 0; list-style-position: inside; }
-.obs-task-row { padding: 3px 7px; color: var(--obs-task-card-text); border-radius: 4px; font-size: 12px; line-height: 1.45; }
+.obs-task-row { padding: 3px 0; color: var(--obs-task-card-text); border-radius: 4px; font-size: 14px; line-height: 1.45; }
 .obs-task-row::marker { color: var(--obs-task-card-text); font-variant-numeric: tabular-nums; }
 .obs-task-row span { overflow-wrap: anywhere; }
 .obs-task-row.focused:not(.done) { color: var(--obs-task-focus-text); background: var(--obs-task-focus-bg); box-shadow: inset 3px 0 var(--obs-task-header-bg); font-weight: 750; }
 .obs-task-row.done { color: var(--obs-task-card-muted); text-decoration: line-through; text-decoration-thickness: 1px; }
-.obs-task-empty { min-height: 100px; display: grid; place-items: center; margin: 0; padding: 18px; color: var(--obs-task-card-text); background: var(--obs-task-card-bg); border: 1px solid var(--obs-task-border); border-radius: 5px; font-size: 9px; }
+.obs-task-empty { min-height: 100px; display: grid; place-items: center; margin: 0; padding: 18px; color: var(--obs-task-card-text); background: transparent; border: 0; border-radius: 0; font-size: 11px; }
 
 @media (max-width: 1050px) {
   .dashboard-grid, .lower-grid { grid-template-columns: 1fr; }
