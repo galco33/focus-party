@@ -19,6 +19,7 @@ The project is fully open source under the MIT License. You can fork it, customi
 - Pomodoro timer controlled from Twitch;
 - personal task lists isolated by viewer and channel;
 - real-time synchronization between the dashboard and OBS overlays;
+- optional bell when focus ends, focus resumes, or the final session finishes;
 - optional PNG logo with customizable size and position across all three OBS sources;
 - multi-channel support, with separate data for every streamer;
 - encrypted Twitch tokens before storage in Cloudflare D1.
@@ -45,6 +46,10 @@ The project is fully open source under the MIT License. You can fork it, customi
 | `!task clear all` | Removes every completed task in the channel | Streamer |
 
 A viewer can never change another viewer’s tasks. The same person can keep separate lists across multiple channels.
+
+## Audio in OBS
+
+The **Timer** and **Timer + Task List** sources play a bell on every phase change. Sound is enabled by default and can be disabled or tested from the overlay page. In OBS, enable **Control audio via OBS** in the Browser source properties, then make sure the source is not muted in the Audio Mixer.
 
 ## Architecture
 

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { isLanguage, overlayCopy, type Language } from "@/app/i18n";
+import { getTimerChimeCue, playTimerChime } from "@/lib/timer-chime";
 
 type OverlayState = {
   channel: { id: string; username: string; connected: boolean };
@@ -47,6 +48,10 @@ export default function Overlay() {
   const [timerLayout, setTimerLayout] = useState<TimerLayout>("classic");
   const [language, setLanguage] = useState<Language>("fr");
   const taskListRef = useRef<HTMLDivElement>(null);
+  const previousTimerRef = useRef<OverlayState["timer"] | null>(null);
+  const displayRef = useRef<"timer" | "tasks" | "combined">("combined");
+  const soundEnabledRef = useRef(true);
+  const previewRef = useRef(false);
   const channelId = typeof window === "undefined"
     ? ""
     : new URLSearchParams(window.location.search).get("channel") ?? "";
@@ -59,10 +64,14 @@ export default function Overlay() {
     const requestedTheme = searchParams.get("theme") as OverlayTheme | null;
     const requestedTimerLayout = searchParams.get("timerStyle") as TimerLayout | null;
     const requestedLanguage = searchParams.get("lang");
+    const requestedSound = searchParams.get("sound");
     const nextDisplay = requestedDisplay === "timer" || requestedDisplay === "tasks" ? requestedDisplay : "combined";
     const nextTheme = requestedTheme && overlayThemeIds.includes(requestedTheme) ? requestedTheme : "focus";
     const nextTimerLayout = requestedTimerLayout && timerLayoutIds.includes(requestedTimerLayout) ? requestedTimerLayout : "classic";
     const nextLanguage = isLanguage(requestedLanguage) ? requestedLanguage : "fr";
+    displayRef.current = nextDisplay;
+    soundEnabledRef.current = requestedSound !== "off";
+    previewRef.current = searchParams.get("preview") === "1";
     const updateDisplay = window.setTimeout(() => {
       setDisplay(nextDisplay);
       setTheme(nextTheme);
@@ -77,7 +86,16 @@ export default function Overlay() {
     if (!channelId) return;
     try {
       const response = await fetch(`/api/state?channel=${encodeURIComponent(channelId)}`, { cache: "no-store" });
-      if (response.ok) setState(await response.json() as OverlayState);
+      if (response.ok) {
+        const next = await response.json() as OverlayState;
+        const previous = previousTimerRef.current;
+        const cue = previous ? getTimerChimeCue(previous, next.timer) : null;
+        previousTimerRef.current = next.timer;
+        if (cue && soundEnabledRef.current && !previewRef.current && displayRef.current !== "tasks") {
+          void playTimerChime(cue);
+        }
+        setState(next);
+      }
     } catch {
       // The current server value is kept through short reconnects.
     }

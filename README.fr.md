@@ -19,6 +19,7 @@ Le projet est entièrement open source sous licence MIT. Vous pouvez le forker, 
 - minuteur Pomodoro contrôlé depuis Twitch ;
 - listes de tâches personnelles, isolées par viewer et par chaîne ;
 - dashboard et overlay OBS synchronisés en temps réel ;
+- cloche facultative à la fin du focus, à la reprise du focus et à la fin de la dernière session ;
 - ajout facultatif d’un logo PNG avec taille et position personnalisables dans les trois sources OBS ;
 - fonctionnement multi-chaînes : chaque streamer possède ses propres données ;
 - chiffrement des jetons Twitch avant leur stockage dans Cloudflare D1.
@@ -45,6 +46,10 @@ Le projet est entièrement open source sous licence MIT. Vous pouvez le forker, 
 | `!task clear all` | Supprime toutes les tâches terminées de la chaîne | Streamer |
 
 Un viewer ne peut jamais modifier les tâches d’un autre viewer. Une personne peut conserver des listes différentes sur plusieurs chaînes.
+
+## Son dans OBS
+
+Les sources **Timer** et **Timer + Task List** jouent une cloche à chaque changement de phase. Le son est activé par défaut et peut être coupé ou testé depuis la page des overlays. Dans OBS, activez **Contrôler l’audio via OBS** dans les propriétés de la source Navigateur, puis vérifiez que cette source n’est pas coupée dans le mélangeur audio.
 
 ## Architecture
 

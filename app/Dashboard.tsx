@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { isLanguage, languageOptions, siteCopy, type Language } from "@/app/i18n";
+import { playTimerChime } from "@/lib/timer-chime";
 
 type Timer = {
   currentSession: number;
@@ -171,6 +172,7 @@ export default function Dashboard() {
   const [previewOverlay, setPreviewOverlay] = useState<OverlayMode>("combined");
   const [overlayTheme, setOverlayTheme] = useState<OverlayTheme>("focus");
   const [timerLayout, setTimerLayout] = useState<TimerLayout>("classic");
+  const [overlaySound, setOverlaySound] = useState(true);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreviewUrl, setLogoPreviewUrl] = useState("");
   const [logoPosition, setLogoPosition] = useState<LogoPosition>("bottom-right");
@@ -212,10 +214,12 @@ export default function Dashboard() {
     const timer = window.setTimeout(() => {
       const stored = window.localStorage.getItem("focus-party-language");
       const storedVisualTheme = window.localStorage.getItem("focus-party-visual-theme");
+      const storedOverlaySound = window.localStorage.getItem("focus-party-overlay-sound");
       const browserLanguage = window.navigator.language.slice(0, 2);
       const nextLanguage = isLanguage(stored) ? stored : isLanguage(browserLanguage) ? browserLanguage : "fr";
       setLanguage(nextLanguage);
       setVisualTheme(storedVisualTheme === "colorblind" ? "colorblind" : "standard");
+      setOverlaySound(storedOverlaySound !== "off");
     }, 0);
     return () => window.clearTimeout(timer);
   }, []);
@@ -228,6 +232,16 @@ export default function Dashboard() {
   const changeVisualTheme = (nextTheme: VisualTheme) => {
     setVisualTheme(nextTheme);
     window.localStorage.setItem("focus-party-visual-theme", nextTheme);
+  };
+
+  const changeOverlaySound = (enabled: boolean) => {
+    setOverlaySound(enabled);
+    window.localStorage.setItem("focus-party-overlay-sound", enabled ? "on" : "off");
+  };
+
+  const testOverlaySound = async () => {
+    const played = await playTimerChime("finished");
+    notify(played ? copy.soundPlayed : copy.soundBlocked);
   };
 
   useEffect(() => {
@@ -463,9 +477,9 @@ export default function Dashboard() {
     ? ""
     : `${window.location.origin}/overlay?channel=${encodeURIComponent(state.channel.id)}`;
   const overlaySources: Array<{ mode: OverlayMode; title: string; description: string; size: string; url: string }> = [
-    { mode: "timer", title: copy.timerOnly, description: copy.timerOnlyDescription, size: "900 × 300 px", url: overlayBaseUrl ? `${overlayBaseUrl}&display=timer&theme=${overlayTheme}&timerStyle=${timerLayout}&lang=${language}` : copy.connectForLink },
+    { mode: "timer", title: copy.timerOnly, description: copy.timerOnlyDescription, size: "900 × 300 px", url: overlayBaseUrl ? `${overlayBaseUrl}&display=timer&theme=${overlayTheme}&timerStyle=${timerLayout}&lang=${language}&sound=${overlaySound ? "on" : "off"}` : copy.connectForLink },
     { mode: "tasks", title: copy.tasksOnly, description: copy.tasksOnlyDescription, size: "650 × 700 px", url: overlayBaseUrl ? `${overlayBaseUrl}&display=tasks&theme=${overlayTheme}&lang=${language}` : copy.connectForLink },
-    { mode: "combined", title: copy.combined, description: copy.combinedDescription, size: "900 × 600 px", url: overlayBaseUrl ? `${overlayBaseUrl}&display=combined&theme=${overlayTheme}&timerStyle=${timerLayout}&lang=${language}` : copy.connectForLink },
+    { mode: "combined", title: copy.combined, description: copy.combinedDescription, size: "900 × 600 px", url: overlayBaseUrl ? `${overlayBaseUrl}&display=combined&theme=${overlayTheme}&timerStyle=${timerLayout}&lang=${language}&sound=${overlaySound ? "on" : "off"}` : copy.connectForLink },
   ];
   const selectedOverlay = overlaySources.find((source) => source.mode === previewOverlay) ?? overlaySources[2];
   const savedLogoUrl = state.channel.id && state.branding.hasLogo
@@ -658,6 +672,13 @@ export default function Dashboard() {
                 ))}
               </div>
             </section>
+            <section className="overlay-sound-picker" aria-labelledby="overlay-sound-title">
+              <div className="overlay-theme-heading"><span><small>{copy.overlaySound}</small><strong id="overlay-sound-title">{copy.sessionBell}</strong></span><p>{copy.soundInLink}</p></div>
+              <div className="overlay-sound-row">
+                <label className="toggle-row" htmlFor="overlay-sound-enabled"><span><strong>{copy.playBell}</strong><small>{copy.bellDescription}</small></span><input id="overlay-sound-enabled" aria-label={copy.playBell} type="checkbox" checked={overlaySound} onChange={(event) => changeOverlaySound(event.target.checked)} /><i aria-hidden="true" /></label>
+                <button type="button" className="sound-test-button" onClick={testOverlaySound}>♬ {copy.testSound}</button>
+              </div>
+            </section>
             <section className="overlay-logo-picker" aria-labelledby="overlay-logo-title">
               <div className="overlay-theme-heading"><span><small>{copy.logoOrImage}</small><strong id="overlay-logo-title">{copy.addPng}</strong></span><p>{copy.logoApplies}</p></div>
               <div className="overlay-logo-content">
@@ -689,7 +710,7 @@ export default function Dashboard() {
                 </article>
               ))}
             </div>
-            {state.channel.id && <div className="overlay-preview-shell"><div className="preview-label"><span>{copy.preview} — {selectedOverlay.title.toUpperCase()} · {copy.themeNames[overlayTheme].toUpperCase()}{selectedOverlay.mode !== "tasks" ? ` · ${copy.timerLayouts[timerLayout].name.toUpperCase()}` : ""}</span><a href={selectedOverlay.url} target="_blank" rel="noreferrer">{copy.openNewTab} ↗</a></div><iframe className={`preview-${selectedOverlay.mode}`} key={`${selectedOverlay.mode}-${overlayTheme}-${timerLayout}-${language}`} title={`${copy.obsPreview} — ${selectedOverlay.title}`} src={selectedOverlay.url} /></div>}
+            {state.channel.id && <div className="overlay-preview-shell"><div className="preview-label"><span>{copy.preview} — {selectedOverlay.title.toUpperCase()} · {copy.themeNames[overlayTheme].toUpperCase()}{selectedOverlay.mode !== "tasks" ? ` · ${copy.timerLayouts[timerLayout].name.toUpperCase()}` : ""}</span><a href={selectedOverlay.url} target="_blank" rel="noreferrer">{copy.openNewTab} ↗</a></div><iframe className={`preview-${selectedOverlay.mode}`} key={`${selectedOverlay.mode}-${overlayTheme}-${timerLayout}-${language}-${overlaySound}`} title={`${copy.obsPreview} — ${selectedOverlay.title}`} src={`${selectedOverlay.url}&preview=1`} /></div>}
             <div className="obs-steps"><div><span>1</span><p><strong>{copy.chooseSource}</strong>{copy.chooseSourceText}</p></div><div><span>2</span><p><strong>{copy.copyUrl}</strong>{copy.copyUrlText}</p></div><div><span>3</span><p><strong>{copy.useSize}</strong>{copy.useSizeText}</p></div></div>
           </section>
         )}
