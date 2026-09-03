@@ -120,6 +120,16 @@ test("keeps persistence, SEO, overlay modes and starter cleanup explicit", async
   assert.match(overlaySource, /getTimerChimeCue/);
   assert.match(overlaySource, /requestedSound !== "off"/);
   assert.match(overlaySource, /displayRef\.current !== "tasks"/);
+  assert.match(overlaySource, /FALLBACK_REFRESH_MS = 5 \* 60 \* 1000/);
+  assert.match(dashboardSource, /FALLBACK_REFRESH_MS = 5 \* 60 \* 1000/);
+  assert.doesNotMatch(overlaySource, /setInterval\(refresh, 8000\)/);
+  assert.doesNotMatch(dashboardSource, /setInterval\(refresh, 8000\)/);
+  assert.match(overlaySource, /realtime\.onclose/);
+  assert.match(dashboardSource, /realtime\.onclose/);
+  assert.match(overlaySource, /visibilitychange/);
+  assert.match(dashboardSource, /visibilitychange/);
+  assert.match(overlaySource, /remainingSeconds !== 0/);
+  assert.match(dashboardSource, /remainingSeconds !== 0/);
   assert.match(dashboardSource, /sound=\$\{overlaySound \? "on" : "off"\}/);
   assert.match(dashboardSource, /preview=1/);
   assert.match(timerChimeSource, /next\.status === "FINISHED"/);

@@ -69,6 +69,8 @@ const overlayThemes: Array<{ id: OverlayTheme; colors: [string, string, string] 
 ];
 
 const timerLayouts: TimerLayout[] = ["classic", "essential", "compact", "centered", "line", "outline"];
+const FALLBACK_REFRESH_MS = 5 * 60 * 1000;
+const REALTIME_RECONNECT_MS = 5000;
 
 const logoPositionOptions: LogoPosition[] = ["top-left", "top-right", "bottom-left", "bottom-right"];
 
@@ -182,6 +184,7 @@ export default function Dashboard() {
   const taskScrollPausedRef = useRef(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const brandingRevisionRef = useRef<string | null | undefined>(undefined);
+  const previousRemainingSecondsRef = useRef(fallbackState.timer.remainingSeconds);
   const copy = siteCopy[language];
 
   const notify = useCallback((message: string) => {
@@ -270,20 +273,36 @@ export default function Dashboard() {
 
   useEffect(() => {
     const initialRefresh = window.setTimeout(refresh, 0);
-    const poll = window.setInterval(refresh, 8000);
+    const poll = window.setInterval(refresh, FALLBACK_REFRESH_MS);
     const localChannel = new BroadcastChannel("focus-party-updates");
     localChannel.onmessage = () => void refresh();
+    let stopped = false;
+    let reconnectTimer: number | null = null;
     let realtime: WebSocket | null = null;
-    if (state.channel.id) {
+
+    const connectRealtime = () => {
+      if (!state.channel.id) return;
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
       realtime = new WebSocket(
         `${protocol}//${window.location.host}/api/realtime?channel=${encodeURIComponent(state.channel.id)}`,
       );
       realtime.onmessage = () => void refresh();
-    }
+      realtime.onclose = () => {
+        if (!stopped) reconnectTimer = window.setTimeout(connectRealtime, REALTIME_RECONNECT_MS);
+      };
+    };
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") void refresh();
+    };
+
+    connectRealtime();
+    document.addEventListener("visibilitychange", refreshWhenVisible);
     return () => {
+      stopped = true;
       window.clearInterval(poll);
       window.clearTimeout(initialRefresh);
+      if (reconnectTimer !== null) window.clearTimeout(reconnectTimer);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
       localChannel.close();
       realtime?.close();
     };
@@ -299,6 +318,14 @@ export default function Dashboard() {
     }, 1000);
     return () => window.clearInterval(tick);
   }, [state.timer.status, state.timer.phase, state.timer.currentSession]);
+
+  useEffect(() => {
+    const previousRemainingSeconds = previousRemainingSecondsRef.current;
+    previousRemainingSecondsRef.current = state.timer.remainingSeconds;
+    if (state.timer.status !== "RUNNING" || state.timer.remainingSeconds !== 0 || previousRemainingSeconds <= 0) return;
+    const boundaryRefresh = window.setTimeout(() => void refresh(), 300);
+    return () => window.clearTimeout(boundaryRefresh);
+  }, [refresh, state.timer.remainingSeconds, state.timer.status]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });

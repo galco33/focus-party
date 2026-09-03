@@ -29,6 +29,8 @@ type OverlayTheme = "focus" | "graphite" | "sand" | "ocean" | "plum" | "frost" |
 const overlayThemeIds: OverlayTheme[] = ["focus", "graphite", "sand", "ocean", "plum", "frost", "accessible"];
 type TimerLayout = "classic" | "essential" | "compact" | "centered" | "line" | "outline";
 const timerLayoutIds: TimerLayout[] = ["classic", "essential", "compact", "centered", "line", "outline"];
+const FALLBACK_REFRESH_MS = 5 * 60 * 1000;
+const REALTIME_RECONNECT_MS = 5000;
 
 const fallback: OverlayState = {
   channel: { id: "", username: "focus-party", connected: false },
@@ -49,6 +51,7 @@ export default function Overlay() {
   const [language, setLanguage] = useState<Language>("fr");
   const taskListRef = useRef<HTMLDivElement>(null);
   const previousTimerRef = useRef<OverlayState["timer"] | null>(null);
+  const previousRemainingSecondsRef = useRef(fallback.timer.remainingSeconds);
   const displayRef = useRef<"timer" | "tasks" | "combined">("combined");
   const soundEnabledRef = useRef(true);
   const previewRef = useRef(false);
@@ -104,13 +107,36 @@ export default function Overlay() {
   useEffect(() => {
     if (!channelId) return;
     const initialRefresh = window.setTimeout(refresh, 0);
-    const poll = window.setInterval(refresh, 8000);
+    const poll = window.setInterval(refresh, FALLBACK_REFRESH_MS);
     const channel = new BroadcastChannel("focus-party-updates");
     channel.onmessage = () => void refresh();
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const realtime = new WebSocket(`${protocol}//${window.location.host}/api/realtime?channel=${encodeURIComponent(channelId)}`);
-    realtime.onmessage = () => void refresh();
-    return () => { window.clearTimeout(initialRefresh); window.clearInterval(poll); channel.close(); realtime.close(); };
+    let stopped = false;
+    let reconnectTimer: number | null = null;
+    let realtime: WebSocket | null = null;
+
+    const connectRealtime = () => {
+      realtime = new WebSocket(`${protocol}//${window.location.host}/api/realtime?channel=${encodeURIComponent(channelId)}`);
+      realtime.onmessage = () => void refresh();
+      realtime.onclose = () => {
+        if (!stopped) reconnectTimer = window.setTimeout(connectRealtime, REALTIME_RECONNECT_MS);
+      };
+    };
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") void refresh();
+    };
+
+    connectRealtime();
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => {
+      stopped = true;
+      window.clearTimeout(initialRefresh);
+      window.clearInterval(poll);
+      if (reconnectTimer !== null) window.clearTimeout(reconnectTimer);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+      channel.close();
+      realtime?.close();
+    };
   }, [channelId, refresh]);
 
   useEffect(() => {
@@ -120,6 +146,14 @@ export default function Overlay() {
     }, 1000);
     return () => window.clearInterval(tick);
   }, [state.timer.status, state.timer.phase, state.timer.currentSession]);
+
+  useEffect(() => {
+    const previousRemainingSeconds = previousRemainingSecondsRef.current;
+    previousRemainingSecondsRef.current = state.timer.remainingSeconds;
+    if (state.timer.status !== "RUNNING" || state.timer.remainingSeconds !== 0 || previousRemainingSeconds <= 0) return;
+    const boundaryRefresh = window.setTimeout(() => void refresh(), 300);
+    return () => window.clearTimeout(boundaryRefresh);
+  }, [refresh, state.timer.remainingSeconds, state.timer.status]);
 
   const total = (state.timer.phase === "FOCUS" ? state.timer.focusDuration : state.timer.breakDuration) * 60;
   const progress = state.timer.status === "IDLE" ? 0 : Math.min(100, Math.max(0, (1 - state.timer.remainingSeconds / total) * 100));
