@@ -280,7 +280,7 @@ export async function runCommand(
       return `Timer réglé sur ${match[1]} min de focus / ${match[2]} min de pause.`;
     },
     "!taskhelp": async () => (
-      "Commandes Task List : !task · !task add … · !task focus 1 · !task edit 1 … · !task done 1 · !task remove 1 · !task clear"
+      "Commandes Task List : !task · !task add … · !task focus 1 · !task edit 1 … · !task done 1 · !task remove 1 · !task clear · !task clear all (streamer)"
     ),
     "!task": async () => {
       await database.prepare(
@@ -311,9 +311,9 @@ export async function runCommand(
       if (sub === "clear" && args[0]?.toLowerCase() === "all") {
         assertStreamer(actor);
         await database.prepare(
-          "DELETE FROM tasks WHERE channel_id = ? AND completed = 1",
+          "DELETE FROM tasks WHERE channel_id = ?",
         ).bind(channelId).run();
-        return "Toutes les tâches terminées ont été nettoyées.";
+        return "Toutes les tâches de la chaîne ont été supprimées.";
       }
       if (sub === "clear") {
         await database.prepare(

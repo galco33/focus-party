@@ -43,9 +43,9 @@ Le projet est entièrement open source sous licence MIT. Vous pouvez le forker, 
 | `!task done 1` | Termine sa tâche n°1 | Tout le monde |
 | `!task remove 1` | Supprime sa tâche n°1 | Tout le monde |
 | `!task clear` | Supprime ses tâches terminées | Tout le monde |
-| `!task clear all` | Supprime toutes les tâches terminées de la chaîne | Streamer |
+| `!task clear all` | Supprime toutes les tâches de la chaîne, y compris celles des autres viewers | Streamer uniquement |
 
-Un viewer ne peut jamais modifier les tâches d’un autre viewer. Une personne peut conserver des listes différentes sur plusieurs chaînes.
+Un viewer ne peut jamais modifier les tâches d’un autre viewer. Seul le streamer peut utiliser `!task clear all` pour remettre à zéro toute la Task List de la chaîne. Une personne peut conserver des listes différentes sur plusieurs chaînes.
 
 ## Son dans OBS
 

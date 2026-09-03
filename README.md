@@ -43,9 +43,9 @@ The project is fully open source under the MIT License. You can fork it, customi
 | `!task done 1` | Completes task number 1 | Everyone |
 | `!task remove 1` | Removes task number 1 | Everyone |
 | `!task clear` | Removes completed personal tasks | Everyone |
-| `!task clear all` | Removes every completed task in the channel | Streamer |
+| `!task clear all` | Removes every task in the channel, including other viewers’ tasks | Streamer only |
 
-A viewer can never change another viewer’s tasks. The same person can keep separate lists across multiple channels.
+A viewer can never change another viewer’s tasks. Only the streamer can use `!task clear all` to reset the whole channel Task List. The same person can keep separate lists across multiple channels.
 
 ## Audio in OBS
 
