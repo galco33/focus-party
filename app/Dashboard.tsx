@@ -84,7 +84,7 @@ const fallbackState: AppState = {
     eventSubStatus: "disconnected",
   },
   timer: {
-    currentSession: 1,
+    currentSession: 0,
     totalSessions: 5,
     focusDuration: 25,
     breakDuration: 5,
@@ -497,6 +497,11 @@ export default function Dashboard() {
   const progress = state.timer.status === "IDLE"
     ? 0
     : Math.min(100, Math.max(0, (1 - state.timer.remainingSeconds / totalSeconds) * 100));
+  const remainingSessionCount = state.timer.status === "IDLE"
+    ? state.timer.totalSessions
+    : state.timer.status === "FINISHED"
+      ? 0
+      : Math.max(0, state.timer.totalSessions - state.timer.currentSession + (state.timer.phase === "FOCUS" ? 1 : 0));
   const completedCount = state.tasks.filter((task) => Boolean(task.completed)).length;
   const participantCount = new Set(state.tasks.map((task) => task.userId)).size;
   const taskGroups = groupTasksByParticipant(state.tasks);
@@ -596,7 +601,7 @@ export default function Dashboard() {
               <section className="timer-card">
                 <div className="card-heading inverted"><div><span className="section-icon"><Icon name="timer" /></span><div><small>{copy.currentPomodoro}</small><h2>{copy.focusSession}</h2></div></div><StatusPill timer={state.timer} copy={copy} /></div>
                 <div className="timer-center"><span className="session-label">{copy.session} {state.timer.currentSession} <i>/</i> {state.timer.totalSessions}</span><strong className="big-time">{formatTime(state.timer.remainingSeconds)}</strong><span className="phase-label">{state.timer.status === "PAUSED" ? copy.pausedLong : state.timer.phase === "BREAK" ? copy.breathing : copy.focusTime}</span></div>
-                <div className="progress-wrap"><div className="progress-meta"><span>{copy.progress}</span><strong>{Math.round(progress)}%</strong></div><div className="progress-track"><i style={{ width: `${progress}%` }} /></div><p>{state.timer.phase === "FOCUS" ? `${copy.nextBreak} : ${state.timer.breakDuration} min` : `${copy.nextFocus} : ${state.timer.focusDuration} min`} <span>•</span> {copy.expectedEnd} {state.timer.totalSessions - state.timer.currentSession + 1} {state.timer.totalSessions - state.timer.currentSession + 1 > 1 ? copy.sessionsWord : copy.sessionWord}</p></div>
+                <div className="progress-wrap"><div className="progress-meta"><span>{copy.progress}</span><strong>{Math.round(progress)}%</strong></div><div className="progress-track"><i style={{ width: `${progress}%` }} /></div><p>{state.timer.phase === "FOCUS" ? `${copy.nextBreak} : ${state.timer.breakDuration} min` : `${copy.nextFocus} : ${state.timer.focusDuration} min`} <span>•</span> {copy.expectedEnd} {remainingSessionCount} {remainingSessionCount > 1 ? copy.sessionsWord : copy.sessionWord}</p></div>
                 <div className="timer-controls">
                   {state.timer.status === "RUNNING" ? <button className="primary-control" onClick={() => controlTimer("pause")} disabled={busy || !state.channel.connected}><span>Ⅱ</span> {copy.pauseTimer}</button> : state.timer.status === "PAUSED" ? <button className="primary-control" onClick={() => controlTimer("resume")} disabled={busy || !state.channel.connected}><span>▶</span> {copy.resumeTimer}</button> : <button className="primary-control" onClick={() => controlTimer("start")} disabled={busy || !state.channel.connected}><span>▶</span> {copy.startFocus}</button>}
                   <button className="icon-control" aria-label={copy.stopReset} onClick={() => controlTimer("stop")} disabled={busy || !state.channel.connected}>■</button>

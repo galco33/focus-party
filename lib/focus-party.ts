@@ -38,6 +38,13 @@ type ChatEventRow = {
   created_at: string;
 };
 
+export function getDisplayedSession(timer: {
+  current_session: number;
+  status: "IDLE" | "RUNNING" | "PAUSED" | "FINISHED";
+}) {
+  return timer.status === "IDLE" ? 0 : timer.current_session;
+}
+
 export function disconnectedState() {
   return {
     channel: {
@@ -49,7 +56,7 @@ export function disconnectedState() {
       eventSubStatus: "disconnected",
     },
     timer: {
-      currentSession: 1,
+      currentSession: 0,
       totalSessions: 5,
       focusDuration: 25,
       breakDuration: 5,
@@ -68,7 +75,7 @@ export async function ensureChannelTimer(database: D1Database, channelId: string
   await database.prepare(
     `INSERT OR IGNORE INTO pomodoro_sessions
      (channel_id, current_session, total_sessions, focus_duration, break_duration, status, phase, remaining_seconds, phase_started_at, updated_at)
-     VALUES (?, 1, 5, 25, 5, 'IDLE', 'FOCUS', 1500, NULL, ?)`,
+     VALUES (?, 0, 5, 25, 5, 'IDLE', 'FOCUS', 1500, NULL, ?)`,
   ).bind(channelId, now).run();
 }
 
@@ -77,7 +84,9 @@ async function getTimer(database: D1Database, channelId: string): Promise<TimerR
     "SELECT * FROM pomodoro_sessions WHERE channel_id = ?",
   ).bind(channelId).first<TimerRow>();
   if (!row) throw new Error("Session Pomodoro introuvable.");
-  if (row.status !== "RUNNING" || !row.phase_started_at) return row;
+  if (row.status !== "RUNNING" || !row.phase_started_at) {
+    return { ...row, current_session: getDisplayedSession(row) };
+  }
 
   const now = Math.floor(Date.now() / 1000);
   let elapsed = Math.max(0, now - row.phase_started_at);
@@ -187,13 +196,20 @@ export async function configureTimer(
   const focus = Math.max(1, Math.min(120, Number(payload.focusDuration ?? timer.focus_duration)));
   const rest = Math.max(1, Math.min(60, Number(payload.breakDuration ?? timer.break_duration)));
   const total = Math.max(1, Math.min(20, Number(payload.totalSessions ?? timer.total_sessions)));
-  const remaining = timer.status === "IDLE" || timer.status === "FINISHED"
-    ? focus * 60
-    : timer.remaining_seconds;
+  const preparingNewRun = timer.status === "IDLE" || timer.status === "FINISHED";
+  const stamp = new Date().toISOString();
+  if (preparingNewRun) {
+    await database.prepare(
+      `UPDATE pomodoro_sessions SET focus_duration = ?, break_duration = ?, total_sessions = ?,
+       current_session = 0, status = 'IDLE', phase = 'FOCUS', remaining_seconds = ?,
+       phase_started_at = NULL, updated_at = ? WHERE channel_id = ?`,
+    ).bind(focus, rest, total, focus * 60, stamp, channelId).run();
+    return;
+  }
   await database.prepare(
     `UPDATE pomodoro_sessions SET focus_duration = ?, break_duration = ?, total_sessions = ?,
      remaining_seconds = ?, updated_at = ? WHERE channel_id = ?`,
-  ).bind(focus, rest, total, remaining, new Date().toISOString(), channelId).run();
+  ).bind(focus, rest, total, timer.remaining_seconds, stamp, channelId).run();
 }
 
 export async function timerAction(database: D1Database, channelId: string, action: string) {
@@ -215,7 +231,7 @@ export async function timerAction(database: D1Database, channelId: string, actio
     ).bind(now, stamp, channelId).run();
   } else if (action === "stop") {
     await database.prepare(
-      `UPDATE pomodoro_sessions SET current_session = 1, status = 'IDLE', phase = 'FOCUS',
+      `UPDATE pomodoro_sessions SET current_session = 0, status = 'IDLE', phase = 'FOCUS',
        remaining_seconds = focus_duration * 60, phase_started_at = NULL, updated_at = ? WHERE channel_id = ?`,
     ).bind(stamp, channelId).run();
   }

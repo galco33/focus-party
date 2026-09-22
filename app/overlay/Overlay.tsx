@@ -34,7 +34,7 @@ const REALTIME_RECONNECT_MS = 5000;
 
 const fallback: OverlayState = {
   channel: { id: "", username: "focus-party", connected: false },
-  timer: { currentSession: 1, totalSessions: 5, focusDuration: 25, breakDuration: 5, status: "IDLE", phase: "FOCUS", remainingSeconds: 1500 },
+  timer: { currentSession: 0, totalSessions: 5, focusDuration: 25, breakDuration: 5, status: "IDLE", phase: "FOCUS", remainingSeconds: 1500 },
   tasks: [],
   branding: { hasLogo: false, position: "bottom-right", size: 84, updatedAt: null },
 };

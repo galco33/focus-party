@@ -45,6 +45,8 @@ The project is fully open source under the MIT License. You can fork it, customi
 | `!task clear` | Removes completed personal tasks | Everyone |
 | `!task clear all` | Removes every task in the channel, including other viewers’ tasks | Streamer only |
 
+A configured timer displays `0 / total` before it starts (for example `0 / 8` after `!pomo 8`), then moves to `1 / total` when the first focus session begins.
+
 A viewer can never change another viewer’s tasks. Only the streamer can use `!task clear all` to reset the whole channel Task List. The same person can keep separate lists across multiple channels.
 
 ## Audio in OBS

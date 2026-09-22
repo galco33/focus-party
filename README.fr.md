@@ -45,6 +45,8 @@ Le projet est entièrement open source sous licence MIT. Vous pouvez le forker, 
 | `!task clear` | Supprime ses tâches terminées | Tout le monde |
 | `!task clear all` | Supprime toutes les tâches de la chaîne, y compris celles des autres viewers | Streamer uniquement |
 
+Un minuteur configuré affiche `0 / total` avant son lancement (par exemple `0 / 8` après `!pomo 8`), puis passe à `1 / total` au démarrage de la première session de focus.
+
 Un viewer ne peut jamais modifier les tâches d’un autre viewer. Seul le streamer peut utiliser `!task clear all` pour remettre à zéro toute la Task List de la chaîne. Une personne peut conserver des listes différentes sur plusieurs chaînes.
 
 ## Son dans OBS

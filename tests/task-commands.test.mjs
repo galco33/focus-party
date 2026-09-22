@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { runCommand } from "../lib/focus-party.ts";
+import { configureTimer, getDisplayedSession, runCommand } from "../lib/focus-party.ts";
 
 class FakeStatement {
   constructor(database, sql) {
@@ -19,6 +19,9 @@ class FakeStatement {
     if (this.sql.includes("command_cooldowns")) {
       return { last_used_at: Date.now() };
     }
+    if (this.sql.includes("SELECT * FROM pomodoro_sessions")) {
+      return this.database.timer;
+    }
     throw new Error(`Unexpected first() query: ${this.sql}`);
   }
 
@@ -31,6 +34,18 @@ class FakeStatement {
 class FakeDatabase {
   constructor() {
     this.executions = [];
+    this.timer = {
+      channel_id: channelId,
+      current_session: 5,
+      total_sessions: 5,
+      focus_duration: 25,
+      break_duration: 5,
+      status: "FINISHED",
+      phase: "FOCUS",
+      remaining_seconds: 0,
+      phase_started_at: null,
+      updated_at: "2026-09-22T00:00:00.000Z",
+    };
   }
 
   prepare(sql) {
@@ -39,6 +54,26 @@ class FakeDatabase {
 }
 
 const channelId = "channel-focus-party";
+
+test("the session counter starts at zero and keeps active progress", () => {
+  assert.equal(getDisplayedSession({ current_session: 1, status: "IDLE" }), 0);
+  assert.equal(getDisplayedSession({ current_session: 1, status: "RUNNING" }), 1);
+  assert.equal(getDisplayedSession({ current_session: 4, status: "PAUSED" }), 4);
+  assert.equal(getDisplayedSession({ current_session: 8, status: "FINISHED" }), 8);
+});
+
+test("configuring a finished timer prepares a new run at zero", async () => {
+  const database = new FakeDatabase();
+
+  await configureTimer(database, channelId, { totalSessions: 8 });
+
+  const update = database.executions.find(({ sql }) => /UPDATE pomodoro_sessions/i.test(sql));
+  assert.ok(update);
+  assert.match(update.sql, /current_session = 0/i);
+  assert.match(update.sql, /status = 'IDLE'/i);
+  assert.match(update.sql, /phase = 'FOCUS'/i);
+  assert.deepEqual(update.bindings.slice(0, 4), [25, 5, 8, 1500]);
+});
 
 test("a viewer cannot clear every task in the channel", async () => {
   const database = new FakeDatabase();

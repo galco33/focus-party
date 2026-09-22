@@ -141,6 +141,13 @@ test("keeps persistence, SEO, overlay modes and starter cleanup explicit", async
   assert.match(focusPartySource, /!task focus 1.*!task edit 1.*!task done 1.*!task remove 1/);
   assert.match(focusPartySource, /UPDATE tasks SET focused = 0/);
   assert.match(focusPartySource, /UPDATE tasks SET text = \?/);
+  assert.match(focusPartySource, /currentSession: 0/);
+  assert.match(focusPartySource, /VALUES \(\?, 0, 5, 25, 5, 'IDLE'/);
+  assert.match(focusPartySource, /current_session = 0, status = 'IDLE'/);
+  assert.match(focusPartySource, /preparingNewRun/);
+  assert.match(focusPartySource, /current_session = 1, status = 'RUNNING'/);
+  assert.match(dashboardSource, /currentSession: 0/);
+  assert.match(overlaySource, /currentSession: 0/);
   assert.match(overlaySource, /"accessible"/);
   assert.match(i18nSource, /Daltonisme.*Color-safe.*Daltonismo/s);
   assert.match(layoutSource, /Pomodoro Twitch gratuit avec overlay OBS/);
